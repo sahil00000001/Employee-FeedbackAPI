@@ -1,0 +1,1481 @@
+Phase 1: Employee Feedback Backend - Core Functionality (COMPLETE)
+
+Database Connection Details
+MongoDB Connection String:
+mongodb+srv://vashishtsahil9999_db_user:!NnWaKEA3XqUu5j@cluster0.oztm0zg.mongodb.net/Employee_Performance_Management_Suite?retryWrites=true&w=majority
+⚠️ IMPORTANT: Password Contains Special Characters
+Your password !NnWaKEA3XqUu5j contains special character ! which needs to be URL encoded for the connection string.
+URL Encoded Password: %21NnWaKEA3XqUu5j (! becomes %21)
+Correct Connection String (URL Encoded):
+mongodb+srv://vashishtsahil9999_db_user:%21NnWaKEA3XqUu5j@cluster0.oztm0zg.mongodb.net/Employee_Performance_Management_Suite?retryWrites=true&w=majority
+Use this encoded version in your code!
+
+Quick Setup in Replit
+Step 1: Create New Replit Project
+
+Go to Replit.com
+Click "Create Repl"
+Select "Node.js"
+Name: employee-feedback-api-phase1
+Click "Create Repl"
+
+Step 2: Add MongoDB Connection to Secrets
+
+Click 🔒 Secrets (lock icon on left sidebar)
+Click "New Secret"
+Key: MONGODB_URI
+Value:
+
+mongodb+srv://vashishtsahil9999_db_user:%21NnWaKEA3XqUu5j@cluster0.oztm0zg.mongodb.net/Employee_Performance_Management_Suite?retryWrites=true&w=majority
+
+Click "Add new secret"
+
+Step 3: Install Dependencies
+In Replit Shell, run:
+bashnpm install express mongoose cors dotenv
+```
+
+---
+
+## Complete Project Structure
+```
+employee-feedback-backend/
+│
+├── index.js
+├── config/
+│   └── db.js
+├── routes/
+│   ├── employees.js
+│   ├── managers.js
+│   ├── projects.js
+│   ├── feedbackAssignment.js
+│   └── feedback360.js
+├── controllers/
+│   ├── employeeController.js
+│   ├── managerController.js
+│   ├── projectController.js
+│   ├── feedbackAssignmentController.js
+│   └── feedback360Controller.js
+├── utils/
+│   ├── calculations.js
+│   └── validators.js
+├── package.json
+└── README.md
+
+Complete Implementation Code
+1. config/db.js
+javascriptconst mongoose = require('mongoose');
+
+const connectDB = async () => {
+  try {
+    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+
+    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    console.log(`📦 Database: ${conn.connection.name}`);
+    
+    // List collections to verify
+    const collections = await conn.connection.db.listCollections().toArray();
+    console.log('📂 Available Collections:');
+    collections.forEach(c => console.log(`   - ${c.name}`));
+    
+  } catch (error) {
+    console.error(`❌ MongoDB Connection Error: ${error.message}`);
+    process.exit(1);
+  }
+};
+
+module.exports = connectDB;
+2. utils/calculations.js
+javascript// Calculate overall rating from feedback array
+const calculateOverallRating = (feedbackArray) => {
+  if (!feedbackArray || feedbackArray.length === 0) return 0;
+  
+  let totalRating = 0;
+  
+  feedbackArray.forEach(feedback => {
+    const ratings = feedback.ratings;
+    const avgRating = (
+      ratings.technical_skills +
+      ratings.communication +
+      ratings.teamwork +
+      ratings.leadership +
+      ratings.problem_solving
+    ) / 5;
+    
+    totalRating += avgRating;
+  });
+  
+  return parseFloat((totalRating / feedbackArray.length).toFixed(1));
+};
+
+// Calculate category-wise averages
+const calculateCategoryAverages = (feedbackArray) => {
+  if (!feedbackArray || feedbackArray.length === 0) return null;
+  
+  const categories = [
+    'technical_skills',
+    'communication',
+    'teamwork',
+    'leadership',
+    'problem_solving'
+  ];
+  
+  const averages = {};
+  
+  categories.forEach(category => {
+    let sum = 0;
+    feedbackArray.forEach(feedback => {
+      sum += feedback.ratings[category];
+    });
+    averages[category] = parseFloat((sum / feedbackArray.length).toFixed(1));
+  });
+  
+  return averages;
+};
+
+module.exports = {
+  calculateOverallRating,
+  calculateCategoryAverages
+};
+3. utils/validators.js
+javascript// Validate employee ID
+const validateEmployeeId = (employee_id) => {
+  if (!employee_id) {
+    return { valid: false, message: 'employee_id is required' };
+  }
+  return { valid: true };
+};
+
+// Validate ratings
+const validateRatings = (ratings) => {
+  const required = ['technical_skills', 'communication', 'teamwork', 'leadership', 'problem_solving'];
+  
+  for (let field of required) {
+    if (!ratings[field]) {
+      return { valid: false, message: `${field} is required` };
+    }
+    if (ratings[field] < 1 || ratings[field] > 5) {
+      return { valid: false, message: `${field} must be between 1 and 5` };
+    }
+  }
+  
+  return { valid: true };
+};
+
+// Validate feedback submission
+const validateFeedbackSubmission = (data) => {
+  const required = ['employee_id', 'reviewer_id', 'reviewer_name', 'feedback_type', 'ratings'];
+  
+  for (let field of required) {
+    if (!data[field]) {
+      return { valid: false, message: `${field} is required` };
+    }
+  }
+  
+  // Validate ratings
+  const ratingsValidation = validateRatings(data.ratings);
+  if (!ratingsValidation.valid) {
+    return ratingsValidation;
+  }
+  
+  // Validate feedback_type
+  if (!['assigned', 'optional'].includes(data.feedback_type)) {
+    return { valid: false, message: 'feedback_type must be "assigned" or "optional"' };
+  }
+  
+  return { valid: true };
+};
+
+module.exports = {
+  validateEmployeeId,
+  validateRatings,
+  validateFeedbackSubmission
+};
+4. controllers/employeeController.js
+javascriptconst mongoose = require('mongoose');
+
+// Get all employees
+exports.getAllEmployees = async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    const { active, department, project } = req.query;
+    
+    const filter = {};
+    if (active) filter.active = parseInt(active);
+    if (department) filter.department = department;
+    if (project) filter.project = project;
+    
+    const employees = await db.collection('Total_Company').find(filter).toArray();
+    
+    res.json({
+      status: 'success',
+      count: employees.length,
+      data: employees
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+// Get employee by ID
+exports.getEmployeeById = async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    const { employee_id } = req.params;
+    
+    const employee = await db.collection('Total_Company').findOne({ employee_id });
+    
+    if (!employee) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Employee not found'
+      });
+    }
+    
+    // Get manager info
+    const peerInfo = await db.collection('Peer_Group').findOne({ peer_id: employee_id });
+    let manager_info = null;
+    
+    if (peerInfo && peerInfo.manager_id) {
+      const manager = await db.collection('Managers').findOne({ manager_id: peerInfo.manager_id });
+      if (manager) {
+        manager_info = {
+          manager_id: manager.manager_id,
+          manager_name: manager.name
+        };
+      }
+    }
+    
+    res.json({
+      status: 'success',
+      data: {
+        ...employee,
+        manager_info
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+// Update employee
+exports.updateEmployee = async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    const { employee_id } = req.params;
+    const updateData = req.body;
+    
+    // Add updated_at timestamp
+    updateData.updated_at = new Date();
+    
+    const result = await db.collection('Total_Company').findOneAndUpdate(
+      { employee_id },
+      { $set: updateData },
+      { returnDocument: 'after' }
+    );
+    
+    if (!result.value) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Employee not found'
+      });
+    }
+    
+    res.json({
+      status: 'success',
+      message: 'Employee updated successfully',
+      data: result.value
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+// Get employees by project
+exports.getEmployeesByProject = async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    const { project_id } = req.params;
+    
+    const project = await db.collection('Project_Details').findOne({ project_id });
+    
+    if (!project) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Project not found'
+      });
+    }
+    
+    const employees = await db.collection('Total_Company')
+      .find({ employee_id: { $in: project.people } })
+      .toArray();
+    
+    res.json({
+      status: 'success',
+      project: project.name,
+      count: employees.length,
+      data: employees
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+// Get employees by department
+exports.getEmployeesByDepartment = async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    const { department } = req.params;
+    
+    const employees = await db.collection('Total_Company')
+      .find({ department })
+      .toArray();
+    
+    res.json({
+      status: 'success',
+      department,
+      count: employees.length,
+      data: employees
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+5. controllers/managerController.js
+javascriptconst mongoose = require('mongoose');
+
+// Get all managers
+exports.getAllManagers = async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    const { active } = req.query;
+    
+    const filter = {};
+    if (active) filter.active = parseInt(active);
+    
+    const managers = await db.collection('Managers').find(filter).toArray();
+    
+    res.json({
+      status: 'success',
+      count: managers.length,
+      data: managers
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+// Get manager's team
+exports.getManagerTeam = async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    const { manager_id } = req.params;
+    
+    // Get manager details
+    const manager = await db.collection('Managers').findOne({ manager_id });
+    
+    if (!manager) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Manager not found'
+      });
+    }
+    
+    // Get team members from Peer_Group
+    const peerGroup = await db.collection('Peer_Group')
+      .find({ manager_id })
+      .toArray();
+    
+    const teamIds = peerGroup.map(peer => peer.peer_id);
+    
+    // Get employee details
+    const team = await db.collection('Total_Company')
+      .find({ employee_id: { $in: teamIds } })
+      .toArray();
+    
+    res.json({
+      status: 'success',
+      manager: {
+        manager_id: manager.manager_id,
+        name: manager.name,
+        project: manager.project_id
+      },
+      team_count: team.length,
+      team
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+// Get manager's projects
+exports.getManagerProjects = async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    const { manager_id } = req.params;
+    
+    const projects = await db.collection('Project_Details')
+      .find({ manager: manager_id })
+      .toArray();
+    
+    res.json({
+      status: 'success',
+      manager_id,
+      data: projects
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+6. controllers/projectController.js
+javascriptconst mongoose = require('mongoose');
+
+// Get all projects
+exports.getAllProjects = async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    const { active } = req.query;
+    
+    const filter = {};
+    if (active) filter.active = parseInt(active);
+    
+    const projects = await db.collection('Project_Details').find(filter).toArray();
+    
+    // Add team size to each project
+    const projectsWithSize = projects.map(project => ({
+      ...project,
+      team_size: project.people ? project.people.length : 0
+    }));
+    
+    res.json({
+      status: 'success',
+      count: projectsWithSize.length,
+      data: projectsWithSize
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+// Get project by ID with full details
+exports.getProjectById = async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    const { project_id } = req.params;
+    
+    const project = await db.collection('Project_Details').findOne({ project_id });
+    
+    if (!project) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Project not found'
+      });
+    }
+    
+    // Get manager details
+    const manager = await db.collection('Managers').findOne({ manager_id: project.manager });
+    
+    // Get scrum master details
+    const scrumMaster = await db.collection('Total_Company').findOne({ employee_id: project.scrum_master });
+    
+    // Get team member details
+    const teamMembers = await db.collection('Total_Company')
+      .find({ employee_id: { $in: project.people } })
+      .toArray();
+    
+    res.json({
+      status: 'success',
+      data: {
+        project_id: project.project_id,
+        name: project.name,
+        manager: manager ? { manager_id: manager.manager_id, name: manager.name } : null,
+        scrum_master: scrumMaster ? { employee_id: scrumMaster.employee_id, name: scrumMaster.name } : null,
+        team_members: teamMembers,
+        team_size: teamMembers.length,
+        active: project.active
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+// Get peer group for employee
+exports.getPeerGroup = async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    const { employee_id } = req.params;
+    
+    // Find employee in Peer_Group
+    const peerInfo = await db.collection('Peer_Group').findOne({ peer_id: employee_id });
+    
+    if (!peerInfo) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Employee not found in peer group'
+      });
+    }
+    
+    // Get all peers in same project
+    const peers = await db.collection('Peer_Group')
+      .find({ 
+        project_id: peerInfo.project_id,
+        peer_id: { $ne: employee_id }
+      })
+      .toArray();
+    
+    const peerIds = peers.map(peer => peer.peer_id);
+    
+    // Get employee details for peers
+    const peerDetails = await db.collection('Total_Company')
+      .find({ employee_id: { $in: peerIds } })
+      .toArray();
+    
+    res.json({
+      status: 'success',
+      employee_id,
+      project: peerInfo.project_id,
+      peer_count: peerDetails.length,
+      peers: peerDetails
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+7. controllers/feedbackAssignmentController.js
+javascriptconst mongoose = require('mongoose');
+
+// Assign feedback reviewers
+exports.assignReviewers = async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    const { employee_id, manager_id, assigned_reviewers } = req.body;
+    
+    // Validate employee exists
+    const employee = await db.collection('Total_Company').findOne({ employee_id });
+    if (!employee) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Employee not found'
+      });
+    }
+    
+    // Validate manager exists
+    const manager = await db.collection('Managers').findOne({ manager_id });
+    if (!manager) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Manager not found'
+      });
+    }
+    
+    // Add assigned_date to each reviewer
+    const assignedWithDate = assigned_reviewers.map(reviewer => ({
+      ...reviewer,
+      assigned_date: new Date()
+    }));
+    
+    // Check if assignment exists
+    const existingAssignment = await db.collection('Assign_Feedback').findOne({ employee_id });
+    
+    if (existingAssignment) {
+      // Update existing
+      await db.collection('Assign_Feedback').updateOne(
+        { employee_id },
+        { 
+          $set: { 
+            assigned: assignedWithDate,
+            status: 'in_progress',
+            updated_at: new Date()
+          } 
+        }
+      );
+    } else {
+      // Create new
+      await db.collection('Assign_Feedback').insertOne({
+        employee_id,
+        name: employee.name,
+        manager_id,
+        assigned: assignedWithDate,
+        optional: [],
+        status: 'in_progress',
+        created_at: new Date(),
+        updated_at: new Date()
+      });
+    }
+    
+    // Ensure 360_Feedback document exists
+    const feedbackDoc = await db.collection('360_Feedback').findOne({ employee_id });
+    if (!feedbackDoc) {
+      await db.collection('360_Feedback').insertOne({
+        employee_id,
+        name: employee.name,
+        feedback: [],
+        overall_rating: 0,
+        review_status: 'pending',
+        l1_comments: '',
+        l2_comments: '',
+        final_increment: 0,
+        created_at: new Date(),
+        updated_at: new Date()
+      });
+    }
+    
+    res.json({
+      status: 'success',
+      message: 'Feedback reviewers assigned successfully',
+      data: {
+        employee_id,
+        assigned_count: assigned_reviewers.length,
+        status: 'in_progress'
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+// Add optional reviewers
+exports.addOptionalReviewers = async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    const { employee_id, optional_reviewers } = req.body;
+    
+    // Check if assignment exists
+    const assignment = await db.collection('Assign_Feedback').findOne({ employee_id });
+    
+    if (!assignment) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'No assignment found. Manager must assign reviewers first.'
+      });
+    }
+    
+    // Add selected_date to each reviewer
+    const optionalWithDate = optional_reviewers.map(reviewer => ({
+      ...reviewer,
+      selected_date: new Date()
+    }));
+    
+    // Add to optional array (avoiding duplicates)
+    const existingOptionalIds = assignment.optional.map(r => r.reviewer_id);
+    const newOptional = optionalWithDate.filter(r => !existingOptionalIds.includes(r.reviewer_id));
+    
+    await db.collection('Assign_Feedback').updateOne(
+      { employee_id },
+      { 
+        $push: { optional: { $each: newOptional } },
+        $set: { updated_at: new Date() }
+      }
+    );
+    
+    const totalReviewers = assignment.assigned.length + assignment.optional.length + newOptional.length;
+    
+    res.json({
+      status: 'success',
+      message: 'Optional reviewers added successfully',
+      data: {
+        employee_id,
+        optional_count: assignment.optional.length + newOptional.length,
+        total_reviewers: totalReviewers
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+// Get assignment for employee
+exports.getAssignment = async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    const { employee_id } = req.params;
+    
+    const assignment = await db.collection('Assign_Feedback').findOne({ employee_id });
+    
+    if (!assignment) {
+      return res.json({
+        status: 'success',
+        data: {
+          employee_id,
+          message: 'No assignment found',
+          assigned: [],
+          optional: [],
+          total_reviewers: 0
+        }
+      });
+    }
+    
+    res.json({
+      status: 'success',
+      data: {
+        ...assignment,
+        total_reviewers: assignment.assigned.length + assignment.optional.length
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+// Get pending feedback for reviewer
+exports.getPendingForReviewer = async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    const { reviewer_id } = req.params;
+    
+    // Find all assignments where reviewer_id is in assigned or optional
+    const assignments = await db.collection('Assign_Feedback').find({}).toArray();
+    
+    const pending = [];
+    
+    for (const assignment of assignments) {
+      // Check if reviewer is in assigned
+      const inAssigned = assignment.assigned.find(r => r.reviewer_id === reviewer_id);
+      // Check if reviewer is in optional
+      const inOptional = assignment.optional.find(r => r.reviewer_id === reviewer_id);
+      
+      if (inAssigned || inOptional) {
+        // Check if feedback already submitted
+        const feedbackDoc = await db.collection('360_Feedback').findOne({ employee_id: assignment.employee_id });
+        const alreadySubmitted = feedbackDoc && feedbackDoc.feedback.find(f => f.reviewer_id === reviewer_id);
+        
+        if (!alreadySubmitted) {
+          const employee = await db.collection('Total_Company').findOne({ employee_id: assignment.employee_id });
+          pending.push({
+            employee_id: assignment.employee_id,
+            name: assignment.name,
+            designation: employee ? employee.designation : '',
+            feedback_type: inAssigned ? 'assigned' : 'optional',
+            submitted: false
+          });
+        }
+      }
+    }
+    
+    res.json({
+      status: 'success',
+      reviewer_id,
+      pending_count: pending.length,
+      data: pending
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+// Get team status for manager
+exports.getTeamStatus = async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    const { manager_id } = req.params;
+    
+    // Get team members
+    const peerGroup = await db.collection('Peer_Group').find({ manager_id }).toArray();
+    const teamIds = peerGroup.map(peer => peer.peer_id);
+    
+    const statusData = [];
+    
+    for (const employee_id of teamIds) {
+      const employee = await db.collection('Total_Company').findOne({ employee_id });
+      const assignment = await db.collection('Assign_Feedback').findOne({ employee_id });
+      const feedbackDoc = await db.collection('360_Feedback').findOne({ employee_id });
+      
+      if (assignment) {
+        const totalExpected = assignment.assigned.length + assignment.optional.length;
+        const feedbackReceived = feedbackDoc ? feedbackDoc.feedback.length : 0;
+        
+        statusData.push({
+          employee_id,
+          name: employee ? employee.name : '',
+          assigned_count: assignment.assigned.length,
+          optional_count: assignment.optional.length,
+          feedback_submitted: feedbackReceived,
+          feedback_pending: totalExpected - feedbackReceived,
+          status: assignment.status
+        });
+      }
+    }
+    
+    res.json({
+      status: 'success',
+      manager_id,
+      team_count: teamIds.length,
+      data: statusData
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+// Remove reviewer
+exports.removeReviewer = async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    const { employee_id, reviewer_id, type } = req.body;
+    
+    if (!['assigned', 'optional'].includes(type)) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Type must be "assigned" or "optional"'
+      });
+    }
+    
+    const arrayName = type === 'assigned' ? 'assigned' : 'optional';
+    
+    await db.collection('Assign_Feedback').updateOne(
+      { employee_id },
+      { 
+        $pull: { [arrayName]: { reviewer_id } },
+        $set: { updated_at: new Date() }
+      }
+    );
+    
+    res.json({
+      status: 'success',
+      message: 'Reviewer removed successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+8. controllers/feedback360Controller.js
+javascriptconst mongoose = require('mongoose');
+const { calculateOverallRating, calculateCategoryAverages } = require('../utils/calculations');
+const { validateFeedbackSubmission } = require('../utils/validators');
+
+// Submit feedback
+exports.submitFeedback = async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    const feedbackData = req.body;
+    
+    // Validate input
+    const validation = validateFeedbackSubmission(feedbackData);
+    if (!validation.valid) {
+      return res.status(400).json({
+        status: 'error',
+        message: validation.message
+      });
+    }
+    
+    const { employee_id, reviewer_id } = feedbackData;
+    
+    // Check if feedback document exists
+    let feedbackDoc = await db.collection('360_Feedback').findOne({ employee_id });
+    
+    if (!feedbackDoc) {
+      // Create new document
+      const employee = await db.collection('Total_Company').findOne({ employee_id });
+      feedbackDoc = {
+        employee_id,
+        name: employee ? employee.name : '',
+        feedback: [],
+        overall_rating: 0,
+        review_status: 'pending',
+        l1_comments: '',
+        l2_comments: '',
+        final_increment: 0,
+        created_at: new Date(),
+        updated_at: new Date()
+      };
+      await db.collection('360_Feedback').insertOne(feedbackDoc);
+    }
+    
+    // Check if reviewer already submitted
+    const existingFeedback = feedbackDoc.feedback.find(f => f.reviewer_id === reviewer_id);
+    if (existingFeedback) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Feedback already submitted. Use update endpoint to modify.'
+      });
+    }
+    
+    // Add new feedback
+    const newFeedback = {
+      reviewer_id: feedbackData.reviewer_id,
+      reviewer_name: feedbackData.reviewer_name,
+      feedback_type: feedbackData.feedback_type,
+      ratings: feedbackData.ratings,
+      comments: feedbackData.comments || '',
+      strengths: feedbackData.strengths || '',
+      areas_of_improvement: feedbackData.areas_of_improvement || '',
+      submitted_date: new Date()
+    };
+    
+    feedbackDoc.feedback.push(newFeedback);
+    
+    // Calculate overall rating
+    const overallRating = calculateOverallRating(feedbackDoc.feedback);
+    
+    // Update document
+    await db.collection('360_Feedback').updateOne(
+      { employee_id },
+      { 
+        $set: { 
+          feedback: feedbackDoc.feedback,
+          overall_rating: overallRating,
+          updated_at: new Date()
+        } 
+      }
+    );
+    
+    res.json({
+      status: 'success',
+      message: 'Feedback submitted successfully',
+      data: {
+        employee_id,
+        reviewer_id,
+        overall_rating: overallRating,
+        feedback_count: feedbackDoc.feedback.length
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+// Get feedback for employee
+exports.getFeedback = async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    const { employee_id } = req.params;
+    
+    const feedbackDoc = await db.collection('360_Feedback').findOne({ employee_id });
+    
+    if (!feedbackDoc) {
+      return res.json({
+        status: 'success',
+        data: {
+          employee_id,
+          name: '',
+          overall_rating: 0,
+          feedback_count: 0,
+          review_status: 'pending',
+          feedback: []
+        }
+      });
+    }
+    
+    res.json({
+      status: 'success',
+      data: {
+        ...feedbackDoc,
+        feedback_count: feedbackDoc.feedback.length
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+// Check if feedback submitted
+exports.checkFeedbackSubmitted = async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    const { employee_id, reviewer_id } = req.params;
+    
+    const feedbackDoc = await db.collection('360_Feedback').findOne({ employee_id });
+    
+    if (!feedbackDoc) {
+      return res.json({
+        status: 'success',
+        submitted: false,
+        feedback: null
+      });
+    }
+    
+    const feedback = feedbackDoc.feedback.find(f => f.reviewer_id === reviewer_id);
+    
+    res.json({
+      status: 'success',
+      submitted: !!feedback,
+      feedback: feedback || null
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+// Update feedback
+exports.updateFeedback = async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    const { employee_id, reviewer_id } = req.params;
+    const updateData = req.body;
+    
+    // Validate input
+    const validation = validateFeedbackSubmission({ ...updateData, employee_id, reviewer_id });
+    if (!validation.valid) {
+      return res.status(400).json({
+        status: 'error',
+        message: validation.message
+      });
+    }
+    
+    const feedbackDoc = await db.collection('360_Feedback').findOne({ employee_id });
+    
+    if (!feedbackDoc) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Feedback document not found'
+      });
+    }
+    
+    // Find and update feedback
+    const feedbackIndex = feedbackDoc.feedback.findIndex(f => f.reviewer_id === reviewer_id);
+    
+    if (feedbackIndex === -1) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Feedback not found for this reviewer'
+      });
+    }
+    
+    feedbackDoc.feedback[feedbackIndex] = {
+      ...feedbackDoc.feedback[feedbackIndex],
+      ratings: updateData.ratings,
+      comments: updateData.comments || '',
+      strengths: updateData.strengths || '',
+      areas_of_improvement: updateData.areas_of_improvement || '',
+      submitted_date: new Date()
+    };
+    
+    // Recalculate overall rating
+    const overallRating = calculateOverallRating(feedbackDoc.feedback);
+    
+    // Update document
+    await db.collection('360_Feedback').updateOne(
+      { employee_id },
+      { 
+        $set: { 
+          feedback: feedbackDoc.feedback,
+          overall_rating: overallRating,
+          updated_at: new Date()
+        } 
+      }
+    );
+    
+    res.json({
+      status: 'success',
+      message: 'Feedback updated successfully',
+      data: {
+        employee_id,
+        overall_rating: overallRating
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
+// Get feedback summary
+exports.getFeedbackSummary = async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    const { employee_id } = req.params;
+    
+    const feedbackDoc = await db.collection('360_Feedback').findOne({ employee_id });
+    
+    if (!feedbackDoc || feedbackDoc.feedback.length === 0) {
+      return res.json({
+        status: 'success',
+        data: {
+          employee_id,
+          name: '',
+          overall_rating: 0,
+          total_feedback_count: 0,
+          average_ratings: null,
+          feedback_breakdown: { assigned: 0, optional: 0 },
+          review_status: 'pending'
+        }
+      });
+    }
+    
+    // Calculate category averages
+    const categoryAverages = calculateCategoryAverages(feedbackDoc.feedback);
+    
+    // Count assigned vs optional
+    const assignedCount = feedbackDoc.feedback.filter(f => f.feedback_type === 'assigned').length;
+    const optionalCount = feedbackDoc.feedback.filter(f => f.feedback_type === 'optional').length;
+    
+    res.json({
+      status: 'success',
+      data: {
+        employee_id: feedbackDoc.employee_id,
+        name: feedbackDoc.name,
+        overall_rating: feedbackDoc.overall_rating,
+        total_feedback_count: feedbackDoc.feedback.length,
+        average_ratings: categoryAverages,
+        feedback_breakdown: {
+          assigned: assignedCount,
+          optional: optionalCount
+        },
+        review_status: feedbackDoc.review_status
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+9. routes/employees.js
+javascriptconst express = require('express');
+const router = express.Router();
+const employeeController = require('../controllers/employeeController');
+
+router.get('/', employeeController.getAllEmployees);
+router.get('/:employee_id', employeeController.getEmployeeById);
+router.put('/:employee_id', employeeController.updateEmployee);
+router.get('/by-project/:project_id', employeeController.getEmployeesByProject);
+router.get('/by-department/:department', employeeController.getEmployeesByDepartment);
+
+module.exports = router;
+10. routes/managers.js
+javascriptconst express = require('express');
+const router = express.Router();
+const managerController = require('../controllers/managerController');
+
+router.get('/', managerController.getAllManagers);
+router.get('/:manager_id/team', managerController.getManagerTeam);
+router.get('/:manager_id/projects', managerController.getManagerProjects);
+
+module.exports = router;
+11. routes/projects.js
+javascriptconst express = require('express');
+const router = express.Router();
+const projectController = require('../controllers/projectController');
+
+router.get('/', projectController.getAllProjects);
+router.get('/:project_id', projectController.getProjectById);
+router.get('/peer-group/:employee_id', projectController.getPeerGroup);
+
+module.exports = router;
+12. routes/feedbackAssignment.js
+javascriptconst express = require('express');
+const router = express.Router();
+const feedbackAssignmentController = require('../controllers/feedbackAssignmentController');
+
+router.post('/assign', feedbackAssignmentController.assignReviewers);
+router.post('/add-optional', feedbackAssignmentController.addOptionalReviewers);
+router.get('/:employee_id', feedbackAssignmentController.getAssignment);
+router.get('/reviewer/:reviewer_id/pending', feedbackAssignmentController.getPendingForReviewer);
+router.get('/manager/:manager_id/status', feedbackAssignmentController.getTeamStatus);
+router.delete('/remove', feedbackAssignmentController.removeReviewer);
+
+module.exports = router;
+13. routes/feedback360.js
+javascriptconst express = require('express');
+const router = express.Router();
+const feedback360Controller = require('../controllers/feedback360Controller');
+
+router.post('/submit', feedback360Controller.submitFeedback);
+router.get('/:employee_id', feedback360Controller.getFeedback);
+router.get('/check/:employee_id/:reviewer_id', feedback360Controller.checkFeedbackSubmitted);
+router.put('/update/:employee_id/:reviewer_id', feedback360Controller.updateFeedback);
+router.get('/:employee_id/summary', feedback360Controller.getFeedbackSummary);
+
+module.exports = router;
+14. index.js (Main Server)
+javascriptconst express = require('express');
+const cors = require('cors');
+require('dotenv').config();
+const connectDB = require('./config/db');
+
+// Import routes
+const employeeRoutes = require('./routes/employees');
+const managerRoutes = require('./routes/managers');
+const projectRoutes = require('./routes/projects');
+const feedbackAssignmentRoutes = require('./routes/feedbackAssignment');
+const feedback360Routes = require('./routes/feedback360');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Connect to MongoDB
+connectDB();
+
+// Root route
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Employee Feedback API - Phase 1',
+    version: '1.0.0',
+    status: 'running',
+    endpoints: {
+      employees: '/api/employees',
+      managers: '/api/managers',
+      projects: '/api/projects',
+      feedbackAssignment: '/api/feedback-assignment',
+      feedback360: '/api/360-feedback'
+    }
+  });
+});
+
+// API Routes
+app.use('/api/employees', employeeRoutes);
+app.use('/api/managers', managerRoutes);
+app.use('/api/projects', projectRoutes);
+app.use('/api/feedback-assignment', feedbackAssignmentRoutes);
+app.use('/api/360-feedback', feedback360Routes);
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    status: 'error',
+    message: err.message || 'Internal Server Error'
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    status: 'error',
+    message: 'Route not found'
+  });
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📍 API Base URL: http://localhost:${PORT}/api`);
+  console.log(`🌐 Root URL: http://localhost:${PORT}`);
+});
+15. package.json
+json{
+  "name": "employee-feedback-api-phase1",
+  "version": "1.0.0",
+  "description": "Employee 360 Feedback & Increment Management System - Phase 1",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "keywords": ["employee", "feedback", "360-feedback", "increment", "performance"],
+  "author": "PODTECH",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongoose": "^7.6.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1"
+  }
+}
+
+Testing Your APIs
+Test in Browser:
+
+Open: https://your-repl-name.your-username.repl.co/
+You should see the API info page
+
+Test Employees API:
+
+Get all: https://your-repl-name.your-username.repl.co/api/employees
+Get by ID: https://your-repl-name.your-username.repl.co/api/employees/1071
+
+Test with Postman or cURL:
+bash# Get all employees
+curl https://your-repl-name.your-username.repl.co/api/employees
+
+# Assign feedback
+curl -X POST https://your-repl-name.your-username.repl.co/api/feedback-assignment/assign \
+  -H "Content-Type: application/json" \
+  -d '{
+    "employee_id": "1071",
+    "manager_id": "1094",
+    "assigned_reviewers": [
+      {"reviewer_id": "1088", "reviewer_name": "Aditya Soni"}
+    ]
+  }'
+
+# Submit feedback
+curl -X POST https://your-repl-name.your-username.repl.co/api/360-feedback/submit \
+  -H "Content-Type: application/json" \
+  -d '{
+    "employee_id": "1071",
+    "reviewer_id": "1088",
+    "reviewer_name": "Aditya Soni",
+    "feedback_type": "assigned",
+    "ratings": {
+      "technical_skills": 4,
+      "communication": 5,
+      "teamwork": 5,
+      "leadership": 4,
+      "problem_solving": 5
+    },
+    "comments": "Excellent work",
+    "strengths": "Quick learner",
+    "areas_of_improvement": "Documentation"
+  }'
+
+README.md
+Create this file in your project:
+markdown# Employee Feedback System - Phase 1 API
+
+Backend REST API for Employee 360 Feedback and Increment Management System.
+
+## Features
+- Employee Management
+- Manager & Team Management
+- Project Management
+- Feedback Assignment (Manager + Employee)
+- 360 Degree Feedback Collection
+- Automated Rating Calculations
+
+## Tech Stack
+- Node.js & Express
+- MongoDB (Atlas)
+- Mongoose
+
+## Setup
+
+### 1. Clone/Download the project
+
+### 2. Install dependencies
+```bash
+npm install
+```
+
+### 3. Configure Environment Variables
+Add to Replit Secrets or create `.env`:
+```
+MONGODB_URI=mongodb+srv://vashishtsahil9999_db_user:%21NnWaKEA3XqUu5j@cluster0.oztm0zg.mongodb.net/Employee_Performance_Management_Suite?retryWrites=true&w=majority
+PORT=3000
+```
+
+### 4. Run the server
+```bash
+npm start
+```
+
+## API Endpoints
+
+### Employees
+- `GET /api/employees` - Get all employees
+- `GET /api/employees/:id` - Get employee by ID
+- `PUT /api/employees/:id` - Update employee
+- `GET /api/employees/by-project/:project_id` - Get by project
+- `GET /api/employees/by-department/:dept` - Get by department
+
+### Managers
+- `GET /api/managers` - Get all managers
+- `GET /api/managers/:id/team` - Get manager's team
+- `GET /api/managers/:id/projects` - Get manager's projects
+
+### Projects
+- `GET /api/projects` - Get all projects
+- `GET /api/projects/:id` - Get project details
+- `GET /api/projects/peer-group/:employee_id` - Get peer group
+
+### Feedback Assignment
+- `POST /api/feedback-assignment/assign` - Assign reviewers
+- `POST /api/feedback-assignment/add-optional` - Add optional reviewers
+- `GET /api/feedback-assignment/:employee_id` - Get assignment
+- `GET /api/feedback-assignment/reviewer/:id/pending` - Pending for reviewer
+- `GET /api/feedback-assignment/manager/:id/status` - Team status
+- `DELETE /api/feedback-assignment/remove` - Remove reviewer
+
+### 360 Feedback
+- `POST /api/360-feedback/submit` - Submit feedback
+- `GET /api/360-feedback/:employee_id` - Get all feedback
+- `GET /api/360-feedback/check/:employee_id/:reviewer_id` - Check if submitted
+- `PUT /api/360-feedback/update/:employee_id/:reviewer_id` - Update feedback
+- `GET /api/360-feedback/:employee_id/summary` - Get summary
+
+## Database
+Database: `Employee_Performance_Management_Suite`
+
+Collections:
+- Total_Company
+- Managers
+- Peer_Group
+- Project_Details
+- Assign_Feedback
+- 360_Feedback
+
+## Phase 1 Complete ✅
+Next: Phase 2 - Review & Approval APIs
+
+Success! 🎉
+You now have a complete Phase 1 implementation with:
+
+✅ 25 API endpoints
+✅ Full folder structure
+✅ Database connection included
+✅ All controllers implemented
+✅ Rating calculations
+✅ Input validation
+✅ Error handling
+✅ Ready to deploy and test
