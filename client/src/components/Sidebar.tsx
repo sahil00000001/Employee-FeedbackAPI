@@ -6,6 +6,7 @@ const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Employees", href: "/employees", icon: Users },
   { name: "Projects", href: "/projects", icon: FolderKanban },
+  { name: "Managers", href: "/managers", icon: Users },
   { name: "Feedback", href: "/feedback", icon: MessageSquarePlus },
 ];
 

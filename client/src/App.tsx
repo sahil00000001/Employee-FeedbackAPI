@@ -9,6 +9,7 @@ import Dashboard from "@/pages/Dashboard";
 import Employees from "@/pages/Employees";
 import EmployeeDetail from "@/pages/EmployeeDetail";
 import Projects from "@/pages/Projects";
+import Managers from "@/pages/Managers";
 import Feedback from "@/pages/Feedback";
 import NotFound from "@/pages/not-found";
 
@@ -22,6 +23,7 @@ function Router() {
           <Route path="/employees" component={Employees} />
           <Route path="/employees/:id" component={EmployeeDetail} />
           <Route path="/projects" component={Projects} />
+          <Route path="/managers" component={Managers} />
           <Route path="/feedback" component={Feedback} />
           <Route component={NotFound} />
         </Switch>
