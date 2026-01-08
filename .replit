@@ -1,9 +1,9 @@
-modules = ["nodejs-20", "web", "postgresql-16"]
+modules = ["nodejs-20", "web"]
 run = "npm run dev"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
-channel = "stable-24_05"
+channel = "stable-25_05"
 
 [[ports]]
 localPort = 5000
@@ -37,3 +37,11 @@ author = "agent"
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
+
+[userenv]
+
+[userenv.shared]
+MONGODB_URI = "mongodb+srv://vashishtsahil9999_db_user:%21NnWaKEA3XqUu5j@cluster0.oztm0zg.mongodb.net/Employee_Performance_Management_Suite?retryWrites=true&w=majority"
+
+[agent]
+expertMode = true

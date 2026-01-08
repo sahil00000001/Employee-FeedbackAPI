@@ -11,11 +11,12 @@ export default function Dashboard() {
   if (loadingEmployees || loadingProjects) return <LoadingScreen />;
   if (errorEmployees || errorProjects) return <ErrorScreen message="Failed to load dashboard data" />;
 
-  const activeEmployees = employees?.filter(e => e.isActive).length || 0;
-  const activeProjects = projects?.filter(p => p.isActive).length || 0;
+  const activeEmployees = (Array.isArray(employees?.data) ? employees.data : employees)?.filter(e => e.active !== 0).length || 0;
+  const activeProjects = (Array.isArray(projects?.data) ? projects.data : projects)?.filter(p => p.active !== 0).length || 0;
   
   // Calculate average team size
-  const totalTeamMembers = projects?.reduce((acc, curr) => acc + (curr.teamSize || 0), 0) || 0;
+  const projectsList = Array.isArray(projects?.data) ? projects.data : (Array.isArray(projects) ? projects : []);
+  const totalTeamMembers = projectsList.reduce((acc, curr) => acc + (Array.isArray(curr.people) ? curr.people.length : 0), 0) || 0;
   const avgTeamSize = activeProjects > 0 ? Math.round(totalTeamMembers / activeProjects) : 0;
 
   return (
@@ -65,25 +66,25 @@ export default function Dashboard() {
             <button className="text-sm font-medium text-primary hover:text-primary/80">View All</button>
           </div>
           <div className="space-y-4">
-            {projects?.slice(0, 5).map((project) => (
-              <div key={project.id} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer group">
+            {projectsList.slice(0, 5).map((project) => (
+              <div key={project.project_id || project.id} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer group">
                 <div className="flex items-center gap-4">
                   <div className="h-10 w-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 font-bold group-hover:border-primary/30 group-hover:text-primary transition-colors">
                     {project.name.substring(0, 2).toUpperCase()}
                   </div>
                   <div>
                     <h4 className="font-semibold text-slate-900">{project.name}</h4>
-                    <p className="text-sm text-slate-500">{project.teamSize} members • {project.managerId || "Unassigned"}</p>
+                    <p className="text-sm text-slate-500">{Array.isArray(project.people) ? project.people.length : 0} members • Manager ID: {project.manager || "Unassigned"}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    Active
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${project.active !== 0 ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
+                    {project.active !== 0 ? "Active" : "Inactive"}
                   </span>
                 </div>
               </div>
             ))}
-            {projects?.length === 0 && (
+            {projectsList.length === 0 && (
               <div className="text-center py-8 text-slate-500">No active projects found.</div>
             )}
           </div>

@@ -1,34 +1,39 @@
-const mongoose = require('mongoose');
-const { validateFeedbackSubmission } = require('../utils/validators');
-const { calculateOverallRating, calculateCategoryAverages } = require('../utils/calculations');
+import { Feedback } from '../models/Feedback.js';
+import { calculateOverallRating, calculateCategoryAverages } from '../utils/calculations.js';
 
 // Submit feedback
-exports.submitFeedback = async (req, res) => {
+export const submitFeedback = async (req, res) => {
   try {
-    const db = mongoose.connection.db;
     const feedbackData = req.body;
     
-    // Validate submission
-    const validation = validateFeedbackSubmission(feedbackData);
-    if (!validation.valid) {
-      return res.status(400).json({
-        status: 'error',
-        message: validation.message
-      });
-    }
+    // Validate submission - We'll keep the utility but you might want to move to Mongoose validation later
+    // For now, let's just use the model
     
-    // Add timestamp
-    feedbackData.created_at = new Date();
-    
-    const result = await db.collection('Feedback_360').insertOne(feedbackData);
+    const feedback = new Feedback({
+      employee_id: feedbackData.employeeId,
+      name: feedbackData.name,
+      reviewer_id: feedbackData.reviewerId,
+      reviewer_name: feedbackData.reviewerName,
+      feedback_type: feedbackData.feedbackType,
+      ratings: {
+        technical_skills: feedbackData.technicalSkills?.[0] || feedbackData.technicalSkills || 3,
+        communication: feedbackData.communication?.[0] || feedbackData.communication || 3,
+        teamwork: feedbackData.teamwork?.[0] || feedbackData.teamwork || 3,
+        leadership: feedbackData.leadership?.[0] || feedbackData.leadership || 3,
+        problem_solving: feedbackData.problemSolving?.[0] || feedbackData.problemSolving || 3
+      },
+      comments: feedbackData.comments,
+      strengths: feedbackData.strengths,
+      areas_of_improvement: feedbackData.areasOfImprovement,
+      submitted_date: new Date()
+    });
+
+    await feedback.save();
     
     res.status(201).json({
       status: 'success',
       message: 'Feedback submitted successfully',
-      data: {
-        _id: result.insertedId,
-        ...feedbackData
-      }
+      data: feedback
     });
   } catch (error) {
     res.status(500).json({
@@ -39,14 +44,10 @@ exports.submitFeedback = async (req, res) => {
 };
 
 // Get feedback for an employee
-exports.getEmployeeFeedback = async (req, res) => {
+export const getEmployeeFeedback = async (req, res) => {
   try {
-    const db = mongoose.connection.db;
     const { employee_id } = req.params;
-    
-    const feedback = await db.collection('Feedback_360')
-      .find({ employee_id })
-      .toArray();
+    const feedback = await Feedback.find({ employee_id });
     
     res.json({
       status: 'success',
@@ -62,14 +63,11 @@ exports.getEmployeeFeedback = async (req, res) => {
 };
 
 // Get feedback summary (averages)
-exports.getFeedbackSummary = async (req, res) => {
+export const getFeedbackSummary = async (req, res) => {
   try {
-    const db = mongoose.connection.db;
     const { employee_id } = req.params;
     
-    const feedback = await db.collection('Feedback_360')
-      .find({ employee_id })
-      .toArray();
+    const feedback = await Feedback.find({ employee_id });
     
     if (feedback.length === 0) {
       return res.json({

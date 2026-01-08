@@ -1,8 +1,11 @@
-const express = require('express');
+import express from 'express';
+import * as feedbackAssignmentController from '../controllers/feedbackAssignmentController.js';
+
 const router = express.Router();
-const feedbackAssignmentController = require('../controllers/feedbackAssignmentController');
 
 router.get('/:employee_id', feedbackAssignmentController.getEmployeeAssignments);
 router.get('/:employee_id/peers', feedbackAssignmentController.getAssignedPeers);
+router.post('/assign', feedbackAssignmentController.assignReviewer);
+router.post('/remove', feedbackAssignmentController.removeReviewer);
 
-module.exports = router;
+export default router;

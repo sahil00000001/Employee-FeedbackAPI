@@ -1,15 +1,17 @@
-const mongoose = require('mongoose');
+import { Manager } from '../models/Manager.js';
+import { Employee } from '../models/Employee.js';
+import { Project } from '../models/Project.js';
+import { Assignment } from '../models/Assignment.js';
 
 // Get all managers
-exports.getAllManagers = async (req, res) => {
+export const getAllManagers = async (req, res) => {
   try {
-    const db = mongoose.connection.db;
     const { active } = req.query;
     
     const filter = {};
     if (active !== undefined) filter.active = parseInt(active);
     
-    const managers = await db.collection('Managers').find(filter).toArray();
+    const managers = await Manager.find(filter);
     
     res.json({
       status: 'success',
@@ -25,12 +27,11 @@ exports.getAllManagers = async (req, res) => {
 };
 
 // Get manager's team
-exports.getManagerTeam = async (req, res) => {
+export const getManagerTeam = async (req, res) => {
   try {
-    const db = mongoose.connection.db;
     const { manager_id } = req.params;
     
-    const manager = await db.collection('Managers').findOne({ manager_id });
+    const manager = await Manager.findOne({ manager_id });
     
     if (!manager) {
       return res.status(404).json({
@@ -39,15 +40,10 @@ exports.getManagerTeam = async (req, res) => {
       });
     }
     
-    const peerGroup = await db.collection('Peer_Group')
-      .find({ manager_id })
-      .toArray();
+    const assignments = await Assignment.find({ manager_id });
+    const teamIds = assignments.map(a => a.employee_id);
     
-    const teamIds = peerGroup.map(peer => peer.peer_id);
-    
-    const team = await db.collection('Total_Company')
-      .find({ employee_id: { $in: teamIds } })
-      .toArray();
+    const team = await Employee.find({ employee_id: { $in: teamIds } });
     
     res.json({
       status: 'success',
@@ -68,14 +64,10 @@ exports.getManagerTeam = async (req, res) => {
 };
 
 // Get manager's projects
-exports.getManagerProjects = async (req, res) => {
+export const getManagerProjects = async (req, res) => {
   try {
-    const db = mongoose.connection.db;
     const { manager_id } = req.params;
-    
-    const projects = await db.collection('Project_Details')
-      .find({ manager: manager_id })
-      .toArray();
+    const projects = await Project.find({ manager: manager_id });
     
     res.json({
       status: 'success',

@@ -1,9 +1,10 @@
-const mongoose = require('mongoose');
+import { Employee } from '../models/Employee.js';
+import { Assignment } from '../models/Assignment.js';
+import { Manager } from '../models/Manager.js';
 
 // Get all employees
-exports.getAllEmployees = async (req, res) => {
+export const getAllEmployees = async (req, res) => {
   try {
-    const db = mongoose.connection.db;
     const { active, department, project } = req.query;
     
     const filter = {};
@@ -11,7 +12,7 @@ exports.getAllEmployees = async (req, res) => {
     if (department) filter.department = department;
     if (project) filter.project = project;
     
-    const employees = await db.collection('Total_Company').find(filter).toArray();
+    const employees = await Employee.find(filter);
     
     res.json({
       status: 'success',
@@ -27,12 +28,11 @@ exports.getAllEmployees = async (req, res) => {
 };
 
 // Get employee by ID
-exports.getEmployeeById = async (req, res) => {
+export const getEmployeeById = async (req, res) => {
   try {
-    const db = mongoose.connection.db;
     const { employee_id } = req.params;
     
-    const employee = await db.collection('Total_Company').findOne({ employee_id });
+    const employee = await Employee.findOne({ employee_id });
     
     if (!employee) {
       return res.status(404).json({
@@ -41,12 +41,12 @@ exports.getEmployeeById = async (req, res) => {
       });
     }
     
-    // Get manager info from Peer_Group
-    const peerInfo = await db.collection('Peer_Group').findOne({ peer_id: employee_id });
+    // Get manager info from Assignment (used to be Peer_Group)
+    const assignment = await Assignment.findOne({ employee_id });
     let manager_info = null;
     
-    if (peerInfo && peerInfo.manager_id) {
-      const manager = await db.collection('Managers').findOne({ manager_id: peerInfo.manager_id });
+    if (assignment && assignment.manager_id) {
+      const manager = await Manager.findOne({ manager_id: assignment.manager_id });
       if (manager) {
         manager_info = {
           manager_id: manager.manager_id,
@@ -58,7 +58,7 @@ exports.getEmployeeById = async (req, res) => {
     res.json({
       status: 'success',
       data: {
-        ...employee,
+        ...employee.toObject(),
         manager_info
       }
     });
@@ -71,22 +71,20 @@ exports.getEmployeeById = async (req, res) => {
 };
 
 // Update employee
-exports.updateEmployee = async (req, res) => {
+export const updateEmployee = async (req, res) => {
   try {
-    const db = mongoose.connection.db;
     const { employee_id } = req.params;
     const updateData = req.body;
     
-    // Add updated_at timestamp
     updateData.updated_at = new Date();
     
-    const result = await db.collection('Total_Company').findOneAndUpdate(
+    const employee = await Employee.findOneAndUpdate(
       { employee_id },
       { $set: updateData },
-      { returnDocument: 'after' }
+      { new: true }
     );
     
-    if (!result.value && !result) {
+    if (!employee) {
       return res.status(404).json({
         status: 'error',
         message: 'Employee not found'
@@ -96,7 +94,7 @@ exports.updateEmployee = async (req, res) => {
     res.json({
       status: 'success',
       message: 'Employee updated successfully',
-      data: result.value || result
+      data: employee
     });
   } catch (error) {
     res.status(500).json({
@@ -107,27 +105,13 @@ exports.updateEmployee = async (req, res) => {
 };
 
 // Get employees by project
-exports.getEmployeesByProject = async (req, res) => {
+export const getEmployeesByProject = async (req, res) => {
   try {
-    const db = mongoose.connection.db;
     const { project_id } = req.params;
-    
-    const project = await db.collection('Project_Details').findOne({ project_id });
-    
-    if (!project) {
-      return res.status(404).json({
-        status: 'error',
-        message: 'Project not found'
-      });
-    }
-    
-    const employees = await db.collection('Total_Company')
-      .find({ employee_id: { $in: project.people || [] } })
-      .toArray();
+    const employees = await Employee.find({ project: project_id });
     
     res.json({
       status: 'success',
-      project: project.name,
       count: employees.length,
       data: employees
     });
@@ -140,18 +124,13 @@ exports.getEmployeesByProject = async (req, res) => {
 };
 
 // Get employees by department
-exports.getEmployeesByDepartment = async (req, res) => {
+export const getEmployeesByDepartment = async (req, res) => {
   try {
-    const db = mongoose.connection.db;
     const { department } = req.params;
-    
-    const employees = await db.collection('Total_Company')
-      .find({ department })
-      .toArray();
+    const employees = await Employee.find({ department });
     
     res.json({
       status: 'success',
-      department,
       count: employees.length,
       data: employees
     });

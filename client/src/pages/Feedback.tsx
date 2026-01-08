@@ -16,6 +16,8 @@ export default function Feedback() {
   const { mutate, isPending } = useSubmitFeedback();
   const { toast } = useToast();
   
+  const employeesList = Array.isArray(employees?.data) ? employees.data : (Array.isArray(employees) ? employees : []);
+
   // Local state for the form
   const [formData, setFormData] = useState({
     employeeId: "",
@@ -107,9 +109,9 @@ export default function Feedback() {
                   <SelectValue placeholder="Select a colleague..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {employees?.map((emp) => (
-                    <SelectItem key={emp.employeeId} value={emp.employeeId}>
-                      {emp.name} — {emp.role}
+                  {employeesList.map((emp: any) => (
+                    <SelectItem key={emp.employee_id || emp.employeeId} value={emp.employee_id || emp.employeeId}>
+                      {emp.name} — {emp.designation || emp.role}
                     </SelectItem>
                   ))}
                 </SelectContent>

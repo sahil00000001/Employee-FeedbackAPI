@@ -28,7 +28,8 @@ export default function Employees() {
   if (isLoading) return <LoadingScreen />;
   if (error) return <ErrorScreen message="Failed to load employees" />;
 
-  const filteredEmployees = employees?.filter(emp => 
+  const employeesList = Array.isArray(employees?.data) ? employees.data : (Array.isArray(employees) ? employees : []);
+  const filteredEmployees = employeesList.filter(emp => 
     emp.name.toLowerCase().includes(search.toLowerCase()) || 
     emp.email.toLowerCase().includes(search.toLowerCase()) ||
     emp.department?.toLowerCase().includes(search.toLowerCase())
@@ -78,9 +79,9 @@ export default function Employees() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredEmployees?.map((employee) => (
-                <tr key={employee.id} className="hover:bg-slate-50/80 transition-colors group">
+                <tr key={employee.employee_id || employee.id} className="hover:bg-slate-50/80 transition-colors group">
                   <td className="px-6 py-4">
-                    <Link href={`/employees/${employee.id}`}>
+                    <Link href={`/employees/${employee.employee_id || employee.id}`}>
                       <div className="flex items-center gap-3 cursor-pointer">
                         <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center text-blue-700 font-bold text-sm">
                           {employee.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
@@ -92,7 +93,7 @@ export default function Employees() {
                       </div>
                     </Link>
                   </td>
-                  <td className="px-6 py-4 text-slate-600">{employee.role || "-"}</td>
+                  <td className="px-6 py-4 text-slate-600">{employee.designation || employee.role || "-"}</td>
                   <td className="px-6 py-4">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
                       {employee.department || "General"}
@@ -101,16 +102,16 @@ export default function Employees() {
                   <td className="px-6 py-4">
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        employee.isActive
+                        employee.active !== 0
                           ? "bg-green-100 text-green-700"
                           : "bg-gray-100 text-gray-700"
                       }`}
                     >
-                      {employee.isActive ? "Active" : "Inactive"}
+                      {employee.active !== 0 ? "Active" : "Inactive"}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-slate-500">
-                    {employee.joinedAt ? format(new Date(employee.joinedAt), "MMM d, yyyy") : "-"}
+                    {employee.created_at ? format(new Date(employee.created_at), "MMM d, yyyy") : "-"}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <button className="text-slate-400 hover:text-primary transition-colors">

@@ -1,5 +1,5 @@
 // Validate employee ID
-const validateEmployeeId = (employee_id) => {
+export const validateEmployeeId = (employee_id) => {
   if (!employee_id) {
     return { valid: false, message: 'employee_id is required' };
   }
@@ -7,7 +7,7 @@ const validateEmployeeId = (employee_id) => {
 };
 
 // Validate ratings
-const validateRatings = (ratings) => {
+export const validateRatings = (ratings) => {
   const required = ['technical_skills', 'communication', 'teamwork', 'leadership', 'problem_solving'];
   
   for (let field of required) {
@@ -23,7 +23,7 @@ const validateRatings = (ratings) => {
 };
 
 // Validate feedback submission
-const validateFeedbackSubmission = (data) => {
+export const validateFeedbackSubmission = (data) => {
   const required = ['employee_id', 'reviewer_id', 'reviewer_name', 'feedback_type', 'ratings'];
   
   for (let field of required) {
@@ -44,10 +44,4 @@ const validateFeedbackSubmission = (data) => {
   }
   
   return { valid: true };
-};
-
-module.exports = {
-  validateEmployeeId,
-  validateRatings,
-  validateFeedbackSubmission
 };

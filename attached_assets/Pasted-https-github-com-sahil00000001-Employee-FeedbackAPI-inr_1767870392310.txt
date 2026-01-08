@@ -1,0 +1,148 @@
+https://github.com/sahil00000001/Employee-FeedbackAPI
+
+
+
+inrelevant data why we are having random data Employees
+Manage your team members and their roles.
+
+Add Employee
+Search by name, email, or department...
+Filter
+Employee Role Department Status Joined Date Actions
+BS
+Bob Smith
+bob@company.com
+Frontend Dev Engineering Active Jan 8, 2026
+CB
+Charlie Brown
+charlie@company.com
+UI Designer Design Active Jan 8, 2026
+
+we need to get data from table itself
+
+Collection name
+Properties
+Storage size
+Documents
+Avg. document size
+Indexes
+Total index size
+360_Feedback
+
+36.86 kB
+2
+432.00 B
+1
+36.86 kB
+
+Assign_Feedback
+36.86 kB
+4
+435.00 B
+1
+36.86 kB
+
+LEVEL_1
+36.86 kB
+3
+130.00 B
+1
+36.86 kB
+
+Managers
+36.86 kB
+12
+130.00 B
+1
+36.86 kB
+
+Peer_Group
+36.86 kB
+53
+148.00 B
+1
+36.86 kB
+
+Project_Details
+36.86 kB
+12
+255.00 B
+1
+36.86 kB
+
+Total_Company
+
+{
+"_id": {
+"$oid": "695e3e8095a5c068f53c392c"
+},
+"employee_id": "0001",
+"name": "Harry Pod",
+"department": "HR (UK)",
+"project": "Management",
+"designation": "Director",
+"email": "harry@podtech.com",
+"active": 1,
+"created_at": {
+"$date": "2026-01-07T11:07:44.911Z"
+},
+"updated_at": {
+"$date": "2026-01-07T11:07:44.911Z"
+}
+}
+
+Project_Details
+
+{
+"_id": {
+"$oid": "695e3ed595a5c068f53c39b5"
+},
+"project_id": "Management",
+"name": "Company Management",
+"people": [
+"0001",
+"0002",
+"1101"
+],
+"scrum_master": "1057",
+"manager": "0001",
+"active": 1,
+"created_at": {
+"$date": "2026-01-07T11:09:09.472Z"
+},
+"updated_at": {
+"$date": "2026-01-07T11:09:09.472Z"
+}
+}
+
+Peer_Group
+
+{
+"_id": {
+"$oid": "695e3ea095a5c068f53c397b"
+},
+"peer_id": "1067",
+"name": "Mohit Yadav",
+"project_id": "Development Team A",
+"manager_id": "1030",
+"active": 1,
+"created_at": {
+"$date": "2026-01-07T11:08:16.881Z"
+}
+}
+
+Managers
+
+{
+"_id": {
+"$oid": "695e3e8b95a5c068f53c396f"
+},
+"manager_id": "0001",
+"name": "Harry Pod",
+"project_id": "Management",
+"active": 1,
+"created_at": {
+"$date": "2026-01-07T11:07:55.587Z"
+}
+}
+

@@ -1,9 +1,10 @@
-const express = require('express');
+import express from 'express';
+import * as managerController from '../controllers/managerController.js';
+
 const router = express.Router();
-const managerController = require('../controllers/managerController');
 
 router.get('/', managerController.getAllManagers);
 router.get('/:manager_id/team', managerController.getManagerTeam);
 router.get('/:manager_id/projects', managerController.getManagerProjects);
 
-module.exports = router;
+export default router;

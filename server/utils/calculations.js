@@ -1,5 +1,5 @@
 // Calculate overall rating from feedback array
-const calculateOverallRating = (feedbackArray) => {
+export const calculateOverallRating = (feedbackArray) => {
   if (!feedbackArray || feedbackArray.length === 0) return 0;
   
   let totalRating = 0;
@@ -21,7 +21,7 @@ const calculateOverallRating = (feedbackArray) => {
 };
 
 // Calculate category-wise averages
-const calculateCategoryAverages = (feedbackArray) => {
+export const calculateCategoryAverages = (feedbackArray) => {
   if (!feedbackArray || feedbackArray.length === 0) return null;
   
   const categories = [
@@ -43,9 +43,4 @@ const calculateCategoryAverages = (feedbackArray) => {
   });
   
   return averages;
-};
-
-module.exports = {
-  calculateOverallRating,
-  calculateCategoryAverages
 };

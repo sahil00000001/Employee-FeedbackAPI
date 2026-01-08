@@ -1,18 +1,18 @@
-const mongoose = require('mongoose');
+import { Project } from '../models/Project.js';
+import { Employee } from '../models/Employee.js';
 
 // Get all projects
-exports.getAllProjects = async (req, res) => {
+export const getAllProjects = async (req, res) => {
   try {
-    const db = mongoose.connection.db;
     const { active } = req.query;
     
     const filter = {};
     if (active !== undefined) filter.active = parseInt(active);
     
-    const projects = await db.collection('Project_Details').find(filter).toArray();
+    const projects = await Project.find(filter);
     
     const projectsWithSize = projects.map(project => ({
-      ...project,
+      ...project.toObject(),
       team_size: project.people ? project.people.length : 0
     }));
     
@@ -30,12 +30,11 @@ exports.getAllProjects = async (req, res) => {
 };
 
 // Get project by ID with full details
-exports.getProjectById = async (req, res) => {
+export const getProjectById = async (req, res) => {
   try {
-    const db = mongoose.connection.db;
     const { project_id } = req.params;
     
-    const project = await db.collection('Project_Details').findOne({ project_id });
+    const project = await Project.findOne({ project_id });
     
     if (!project) {
       return res.status(404).json({
@@ -44,14 +43,12 @@ exports.getProjectById = async (req, res) => {
       });
     }
     
-    const people = await db.collection('Total_Company')
-      .find({ employee_id: { $in: project.people || [] } })
-      .toArray();
+    const people = await Employee.find({ employee_id: { $in: project.people || [] } });
     
     res.json({
       status: 'success',
       data: {
-        ...project,
+        ...project.toObject(),
         people_details: people
       }
     });
