@@ -13,6 +13,20 @@ const feedbackSchema = new mongoose.Schema({
     leadership: { type: Number, min: 1, max: 5 },
     problem_solving: { type: Number, min: 1, max: 5 }
   },
+  detailed_ratings: [
+    {
+      category_id: String,
+      category_title: String,
+      points: [
+        {
+          point_id: String,
+          label: String,
+          rating: Number,
+          comment: String
+        }
+      ]
+    }
+  ],
   comments: String,
   strengths: String,
   areas_of_improvement: String,

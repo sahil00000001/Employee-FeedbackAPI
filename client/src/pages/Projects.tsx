@@ -1,7 +1,7 @@
 import { useProjects } from "@/hooks/use-projects";
 import { useEmployees } from "@/hooks/use-employees";
 import { LoadingScreen, ErrorScreen } from "@/components/LoadingScreen";
-import { FolderKanban, Users, Calendar, UserPlus, X, Check } from "lucide-react";
+import { FolderKanban, Users, Calendar, UserPlus, X, Check, Search } from "lucide-react";
 import { useState } from "react";
 import {
   Dialog,
@@ -19,8 +19,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { useFeedbackAssignments, useAssignReviewer, useRemoveReviewer } from "@/hooks/use-feedback-assignment";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth";
 
 export default function Projects() {
+  const { user } = useAuth();
   const { data: projects, isLoading: projectsLoading, error: projectsError } = useProjects();
   const { data: employees, isLoading: employeesLoading } = useEmployees();
   const [selectedProject, setSelectedProject] = useState<any>(null);
@@ -32,6 +34,10 @@ export default function Projects() {
   const projectsList = Array.isArray(projects?.data) ? projects.data : (Array.isArray(projects) ? projects : []);
   const employeesList = Array.isArray(employees?.data) ? employees.data : (Array.isArray(employees) ? employees : []);
 
+  // Managers see all projects, users see nothing (handled by routing), admins see all
+  // In the future, we could filter projectsList based on user.employeeId if they are a manager of specific projects
+  const displayProjects = projectsList;
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
@@ -39,13 +45,15 @@ export default function Projects() {
           <h1 className="text-3xl font-bold text-slate-900">Projects</h1>
           <p className="text-slate-500 mt-1">Ongoing initiatives and team assignments.</p>
         </div>
-        <button className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-xl font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all">
-          New Project
-        </button>
+        {user?.role === "admin" && (
+          <button className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-xl font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all">
+            New Project
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {projectsList.map((project) => (
+        {displayProjects.map((project: any) => (
           <div 
             key={project.project_id || project.id} 
             className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md hover:border-primary/20 transition-all group cursor-pointer"
@@ -73,7 +81,11 @@ export default function Projects() {
                 <Users className="h-4 w-4 text-slate-400" />
                 <span>{Array.isArray(project.people) ? project.people.length : 0} Members</span>
               </div>
-              <div className="text-xs text-slate-400">ID: {project.project_id || project.projectId}</div>
+              {user?.role === "manager" && (
+                <div className="flex items-center text-primary text-xs font-bold gap-1">
+                  <UserPlus className="h-3 w-3" /> Assign
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -86,7 +98,7 @@ export default function Projects() {
         employees={employeesList}
       />
       
-      {projectsList.length === 0 && (
+      {displayProjects.length === 0 && (
         <div className="text-center py-20">
           <div className="inline-flex items-center justify-center p-6 bg-slate-50 rounded-full mb-4">
             <FolderKanban className="h-10 w-10 text-slate-300" />
@@ -221,11 +233,11 @@ function ReviewerAssignment({ employee, project, allEmployees }: any) {
           <div key={reviewer.reviewer_id} className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-white group hover:border-red-100 transition-colors">
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">
-                {reviewer.reviewer_name.split(" ").map((n: any) => n[0]).join("")}
+                {(reviewer.reviewer_name || "??").split(" ").filter(Boolean).map((n: any) => n[0]).join("")}
               </div>
               <div>
-                <p className="text-sm font-medium text-slate-900">{reviewer.reviewer_name}</p>
-                <p className="text-[10px] text-slate-400">Assigned on {new Date(reviewer.assigned_date).toLocaleDateString()}</p>
+                <p className="text-sm font-medium text-slate-900">{reviewer.reviewer_name || "Unknown Reviewer"}</p>
+                <p className="text-[10px] text-slate-400">Assigned on {reviewer.assigned_date ? new Date(reviewer.assigned_date).toLocaleDateString() : 'N/A'}</p>
               </div>
             </div>
             <Button 

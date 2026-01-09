@@ -15,7 +15,8 @@ export default function EmployeeDetail() {
   const employeeIdStr = employee?.employeeId || "";
   
   const { data: summary, isLoading: sumLoading } = useFeedbackSummary(employeeIdStr);
-  const { data: feedbackList, isLoading: feedLoading } = useEmployeeFeedback(employeeIdStr);
+  const { data: feedbackData, isLoading: feedLoading } = useEmployeeFeedback(employeeIdStr);
+  const feedbackList = feedbackData?.data || [];
 
   if (empLoading || sumLoading || feedLoading) return <LoadingScreen />;
   if (!employee) return <ErrorScreen message="Employee not found" />;
@@ -107,7 +108,7 @@ export default function EmployeeDetail() {
           </div>
 
           <div className="space-y-4">
-            {feedbackList?.map((fb) => (
+            {feedbackList?.map((fb: any) => (
               <div key={fb.id} className="bg-white rounded-xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">

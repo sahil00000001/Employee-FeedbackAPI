@@ -4,6 +4,7 @@ import { LoadingScreen, ErrorScreen } from "@/components/LoadingScreen";
 import { Link } from "wouter";
 import { Plus, Search, Filter, MoreHorizontal, UserPlus } from "lucide-react";
 import { format } from "date-fns";
+import { useAuth } from "@/lib/auth";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +22,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertEmployeeSchema } from "@shared/schema";
 
 export default function Employees() {
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const { data: employees, isLoading, error } = useEmployees();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -29,10 +31,14 @@ export default function Employees() {
   if (error) return <ErrorScreen message="Failed to load employees" />;
 
   const employeesList = Array.isArray(employees?.data) ? employees.data : (Array.isArray(employees) ? employees : []);
-  const filteredEmployees = employeesList.filter(emp => 
+  
+  // Managers see all employees, but they cannot create new ones (simplified for now)
+  const canCreate = user?.role === "admin";
+  
+  const filteredEmployees = employeesList.filter((emp: any) => 
     emp.name.toLowerCase().includes(search.toLowerCase()) || 
     emp.email.toLowerCase().includes(search.toLowerCase()) ||
-    emp.department?.toLowerCase().includes(search.toLowerCase())
+    (emp.department && emp.department.toLowerCase().includes(search.toLowerCase()))
   );
 
   return (
@@ -43,7 +49,12 @@ export default function Employees() {
           <p className="text-slate-500 mt-1">Manage your team members and their roles.</p>
         </div>
         <div className="flex items-center gap-3">
-          <CreateEmployeeDialog open={isCreateOpen} onOpenChange={setIsCreateOpen} />
+          {canCreate && <CreateEmployeeDialog open={isCreateOpen} onOpenChange={setIsCreateOpen} />}
+          {user?.role === "manager" && (
+            <div className="bg-primary/5 text-primary px-4 py-2 rounded-xl text-sm font-bold border border-primary/10">
+              Manager View: All Staff
+            </div>
+          )}
         </div>
       </div>
 

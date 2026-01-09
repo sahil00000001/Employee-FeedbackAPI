@@ -5,12 +5,12 @@ import { LoadingScreen } from "@/components/LoadingScreen";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Send, UserCheck } from "lucide-react";
+import { Send, UserCheck, Sparkles } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { FeedbackAssignment } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
+import { InteractiveFeedbackForm } from "@/components/InteractiveFeedbackForm";
 
 export default function Feedback() {
   const { data: employees, isLoading: isLoadingEmployees } = useEmployees({ active: "1" });
@@ -22,9 +22,7 @@ export default function Feedback() {
   
   const employeesList = Array.isArray(employees?.data) ? employees.data : (Array.isArray(employees) ? employees : []);
 
-  // Filter employees that the current user is assigned to review
-  // For demo purposes, we'll assume the current user is 'EMP-001'
-  const currentUserEmployeeId = "EMP-001";
+  const currentUserEmployeeId = "0001";
   const assignedColleagueIds = assignments
     ?.filter(a => a.peers?.includes(currentUserEmployeeId))
     .map(a => a.employeeId) || [];
@@ -37,12 +35,13 @@ export default function Feedback() {
     employeeId: "",
     feedbackType: "assigned",
     comments: "",
-    technicalSkills: [3],
-    communication: [3],
-    teamwork: [3],
-    leadership: [3],
-    problemSolving: [3],
+    strengths: "",
+    areasOfImprovement: "",
+    detailedRatings: [] as any[],
   });
+
+  const selectedEmployee = employeesList.find((emp: any) => (emp.employee_id || emp.employeeId) === formData.employeeId);
+  const employeeRole = selectedEmployee?.designation || "Developer";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,16 +52,20 @@ export default function Feedback() {
 
     const submissionData = {
       employeeId: formData.employeeId,
+      name: selectedEmployee?.name,
       reviewerId: currentUserEmployeeId, 
-      reviewerName: "Jane Doe",
+      reviewerName: "Harry Pod",
       feedbackType: formData.feedbackType,
       comments: formData.comments,
-      technicalSkills: formData.technicalSkills[0],
-      communication: formData.communication[0],
-      teamwork: formData.teamwork[0],
-      leadership: formData.leadership[0],
-      problemSolving: formData.problemSolving[0],
-      projectId: "PROJ-001"
+      strengths: formData.strengths,
+      areasOfImprovement: formData.areasOfImprovement,
+      detailedRatings: formData.detailedRatings,
+      technicalSkills: 3,
+      communication: 3,
+      teamwork: 3,
+      leadership: 3,
+      problemSolving: 3,
+      projectId: selectedEmployee?.project || "Management"
     };
 
     mutate(submissionData, {
@@ -72,11 +75,9 @@ export default function Feedback() {
           employeeId: "",
           feedbackType: "assigned",
           comments: "",
-          technicalSkills: [3],
-          communication: [3],
-          teamwork: [3],
-          leadership: [3],
-          problemSolving: [3],
+          strengths: "",
+          areasOfImprovement: "",
+          detailedRatings: [],
         });
       },
       onError: (err) => {
@@ -86,17 +87,6 @@ export default function Feedback() {
   };
 
   if (isLoadingEmployees || isLoadingAssignments) return <LoadingScreen />;
-
-  const getRatingLabel = (val: number) => {
-    const labels: Record<number, string> = { 1: "Poor", 2: "Fair", 3: "Good", 4: "Very Good", 5: "Excellent" };
-    return labels[val] || "";
-  };
-
-  const getRatingColor = (val: number) => {
-    if (val <= 2) return "text-red-500";
-    if (val === 3) return "text-yellow-600";
-    return "text-green-600";
-  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
@@ -136,7 +126,7 @@ export default function Feedback() {
                   )}
                   {assignedColleagues.map((emp: any) => (
                     <SelectItem key={emp.employee_id || emp.employeeId} value={emp.employee_id || emp.employeeId}>
-                      {emp.name} — {emp.role}
+                      {emp.name} — {emp.designation}
                     </SelectItem>
                   ))}
                   <div className="px-2 py-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider border-t mt-1">
@@ -144,7 +134,7 @@ export default function Feedback() {
                   </div>
                   {employeesList.map((emp: any) => (
                     <SelectItem key={emp.employee_id || emp.employeeId} value={emp.employee_id || emp.employeeId}>
-                      {emp.name} — {emp.role}
+                      {emp.name} — {emp.designation}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -171,48 +161,52 @@ export default function Feedback() {
         </div>
 
         <div className="p-8 space-y-8">
-          <h3 className="text-lg font-bold text-slate-900 pb-2 border-b border-slate-100">Competency Ratings</h3>
-          
-          <div className="space-y-8">
-            {[
-              { id: 'technicalSkills', label: 'Technical Skills', desc: 'Job knowledge, technical proficiency' },
-              { id: 'communication', label: 'Communication', desc: 'Clarity, listening, responsiveness' },
-              { id: 'teamwork', label: 'Teamwork', desc: 'Collaboration, supportiveness, attitude' },
-              { id: 'leadership', label: 'Leadership', desc: 'Initiative, mentoring, ownership' },
-              { id: 'problemSolving', label: 'Problem Solving', desc: 'Critical thinking, solution-oriented' },
-            ].map((field) => (
-              <div key={field.id} className="space-y-4">
-                <div className="flex justify-between items-end">
-                  <div>
-                    <Label className="text-base font-semibold">{field.label}</Label>
-                    <p className="text-xs text-slate-500 mt-0.5">{field.desc}</p>
-                  </div>
-                  <div className={`font-bold ${getRatingColor((formData as any)[field.id][0])}`}>
-                    {getRatingLabel((formData as any)[field.id][0])} ({(formData as any)[field.id][0]}/5)
-                  </div>
-                </div>
-                <Slider
-                  value={(formData as any)[field.id]}
-                  min={1}
-                  max={5}
-                  step={1}
-                  onValueChange={(val) => setFormData({...formData, [field.id]: val})}
-                  className="py-4"
-                />
-                <div className="flex justify-between text-xs text-slate-400 px-1">
-                  <span>Poor</span>
-                  <span>Excellent</span>
-                </div>
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+            <h3 className="text-lg font-bold text-slate-900">Performance Review</h3>
+            {formData.employeeId && (
+              <div className="flex items-center gap-2 text-primary text-xs font-semibold bg-primary/5 px-3 py-1 rounded-full border border-primary/10">
+                <Sparkles className="h-3 w-3" /> Custom {employeeRole} Template
               </div>
-            ))}
+            )}
+          </div>
+          
+          {formData.employeeId ? (
+            <InteractiveFeedbackForm 
+              role={employeeRole} 
+              onUpdate={(detailedRatings) => setFormData(prev => ({ ...prev, detailedRatings }))}
+            />
+          ) : (
+            <div className="py-12 text-center border-2 border-dashed border-slate-100 rounded-2xl">
+              <p className="text-slate-400 font-medium">Please select a colleague above to start the review</p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-slate-100">
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-slate-700">Key Strengths</Label>
+              <Textarea 
+                className="min-h-[100px] rounded-xl bg-slate-50/30 border-slate-100 focus:bg-white transition-colors" 
+                placeholder="What does this person do exceptionally well?"
+                value={formData.strengths}
+                onChange={(e) => setFormData({...formData, strengths: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-slate-700">Areas for Growth</Label>
+              <Textarea 
+                className="min-h-[100px] rounded-xl bg-slate-50/30 border-slate-100 focus:bg-white transition-colors" 
+                placeholder="Where could they improve or develop further?"
+                value={formData.areasOfImprovement}
+                onChange={(e) => setFormData({...formData, areasOfImprovement: e.target.value})}
+              />
+            </div>
           </div>
 
-          <div className="pt-6 border-t border-slate-100">
-            <Label className="text-base font-semibold">Additional Comments</Label>
-            <p className="text-xs text-slate-500 mb-3">Provide context for your ratings (optional but encouraged)</p>
+          <div className="pt-2">
+            <Label className="text-sm font-semibold text-slate-700">Closing Comments</Label>
             <Textarea 
-              className="min-h-[120px] rounded-xl resize-none" 
-              placeholder="Share specific examples..."
+              className="min-h-[80px] rounded-xl bg-slate-50/30 border-slate-100 focus:bg-white transition-colors" 
+              placeholder="Any final thoughts or overall impression..."
               value={formData.comments}
               onChange={(e) => setFormData({...formData, comments: e.target.value})}
             />

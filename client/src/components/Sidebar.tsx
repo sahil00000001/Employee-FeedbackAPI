@@ -1,17 +1,20 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Users, FolderKanban, MessageSquarePlus, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, FolderKanban, MessageSquarePlus, LogOut, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const navigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Employees", href: "/employees", icon: Users },
-  { name: "Projects", href: "/projects", icon: FolderKanban },
-  { name: "Managers", href: "/managers", icon: Users },
-  { name: "Feedback", href: "/feedback", icon: MessageSquarePlus },
-];
+import { useAuth } from "@/lib/auth";
 
 export function Sidebar() {
   const [location] = useLocation();
+  const { user, logout } = useAuth();
+
+  const navigation = [
+    { name: "Dashboard", href: "/", icon: LayoutDashboard, roles: ["admin", "manager", "user"] },
+    { name: "Employees", href: "/employees", icon: Users, roles: ["admin", "manager"] },
+    { name: "Projects", href: "/projects", icon: FolderKanban, roles: ["admin", "manager"] },
+    { name: "Managers", href: "/managers", icon: Users, roles: ["admin"] },
+    { name: "My Feedbacks", href: "/my-reviews", icon: ClipboardList, roles: ["admin", "manager", "user"] },
+    { name: "Feedback", href: "/feedback", icon: MessageSquarePlus, roles: ["admin", "manager", "user"] },
+  ].filter(item => item.roles.includes(user?.role || ""));
 
   return (
     <div className="flex h-screen w-64 flex-col fixed inset-y-0 z-50 bg-slate-900 text-white shadow-xl">
@@ -53,13 +56,16 @@ export function Sidebar() {
       <div className="p-4 border-t border-slate-800">
         <div className="bg-slate-800/50 rounded-xl p-4 flex items-center gap-3">
           <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold">
-            JD
+            {user?.name?.split(' ').map(n => n[0]).join('') || 'U'}
           </div>
           <div className="flex-1 overflow-hidden">
-            <p className="text-sm font-medium text-white truncate">Jane Doe</p>
-            <p className="text-xs text-slate-400 truncate">HR Manager</p>
+            <p className="text-sm font-medium text-white truncate">{user?.name || 'Guest'}</p>
+            <p className="text-xs text-slate-400 truncate capitalize">{user?.role || 'Guest'}</p>
           </div>
-          <button className="text-slate-400 hover:text-white transition-colors">
+          <button 
+            onClick={logout}
+            className="text-slate-400 hover:text-white transition-colors"
+          >
             <LogOut className="h-5 w-5" />
           </button>
         </div>

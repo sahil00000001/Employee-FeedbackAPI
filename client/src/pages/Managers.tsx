@@ -35,7 +35,15 @@ export default function Managers() {
   const mutation = useMutation({
     mutationFn: async (data: { employeeId: string; managerId: string; peers: string[] }) => {
       console.log("Submitting assignment:", data);
-      const res = await apiRequest("POST", "/api/feedback-assignment", data);
+      const res = await fetch("/api/feedback-assignment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to assign reviewer");
+      }
       return res.json();
     },
     onSuccess: () => {

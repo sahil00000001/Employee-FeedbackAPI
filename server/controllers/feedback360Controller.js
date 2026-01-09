@@ -1,13 +1,27 @@
 import { Feedback } from '../models/Feedback.js';
 import { calculateOverallRating, calculateCategoryAverages } from '../utils/calculations.js';
 
+// Get all feedback
+export const getAllFeedback = async (req, res) => {
+  try {
+    const feedback = await Feedback.find({});
+    res.json({
+      status: 'success',
+      count: feedback.length,
+      data: feedback
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+};
+
 // Submit feedback
 export const submitFeedback = async (req, res) => {
   try {
     const feedbackData = req.body;
-    
-    // Validate submission - We'll keep the utility but you might want to move to Mongoose validation later
-    // For now, let's just use the model
     
     const feedback = new Feedback({
       employee_id: feedbackData.employeeId,
@@ -16,12 +30,13 @@ export const submitFeedback = async (req, res) => {
       reviewer_name: feedbackData.reviewerName,
       feedback_type: feedbackData.feedbackType,
       ratings: {
-        technical_skills: feedbackData.technicalSkills?.[0] || feedbackData.technicalSkills || 3,
-        communication: feedbackData.communication?.[0] || feedbackData.communication || 3,
-        teamwork: feedbackData.teamwork?.[0] || feedbackData.teamwork || 3,
-        leadership: feedbackData.leadership?.[0] || feedbackData.leadership || 3,
-        problem_solving: feedbackData.problemSolving?.[0] || feedbackData.problemSolving || 3
+        technical_skills: feedbackData.technicalSkills || 3,
+        communication: feedbackData.communication || 3,
+        teamwork: feedbackData.teamwork || 3,
+        leadership: feedbackData.leadership || 3,
+        problem_solving: feedbackData.problemSolving || 3
       },
+      detailed_ratings: feedbackData.detailedRatings || [],
       comments: feedbackData.comments,
       strengths: feedbackData.strengths,
       areas_of_improvement: feedbackData.areasOfImprovement,

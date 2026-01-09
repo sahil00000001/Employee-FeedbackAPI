@@ -90,6 +90,13 @@ export const api = {
         200: z.any(),
       },
     },
+    listForEmployee: {
+      method: 'GET' as const,
+      path: '/api/feedback-360/employee/:employee_id',
+      responses: {
+        200: z.any(),
+      },
+    },
   }
 };
 
