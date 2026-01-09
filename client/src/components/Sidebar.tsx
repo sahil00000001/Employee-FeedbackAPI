@@ -8,12 +8,12 @@ export function Sidebar() {
   const { user, logout } = useAuth();
 
   const navigation = [
-    { name: "Dashboard", href: "/", icon: LayoutDashboard, roles: ["admin", "manager", "user"] },
+    { name: "Dashboard", href: "/", icon: LayoutDashboard, roles: ["admin", "manager", "employee", "user"] },
     { name: "Employees", href: "/employees", icon: Users, roles: ["admin", "manager"] },
     { name: "Projects", href: "/projects", icon: FolderKanban, roles: ["admin", "manager"] },
     { name: "Managers", href: "/managers", icon: Users, roles: ["admin"] },
-    { name: "My Feedbacks", href: "/my-reviews", icon: ClipboardList, roles: ["admin", "manager", "user"] },
-    { name: "Feedback", href: "/feedback", icon: MessageSquarePlus, roles: ["admin", "manager", "user"] },
+    { name: "My Feedbacks", href: "/my-reviews", icon: ClipboardList, roles: ["admin", "manager", "employee", "user"] },
+    { name: "Feedback", href: "/feedback", icon: MessageSquarePlus, roles: ["admin", "manager", "employee", "user"] },
   ].filter(item => item.roles.includes(user?.role || ""));
 
   return (

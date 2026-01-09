@@ -56,7 +56,7 @@ export default function MyReviews() {
                       </div>
                     </div>
                     
-                    <Link href={`/feedback`}>
+                    <Link href={`/feedback?employeeId=${review.employeeId}`}>
                       <Button variant="outline" className="rounded-xl group">
                         Provide Feedback
                         <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />

@@ -73,6 +73,14 @@ export const feedback360 = pgTable("feedback_360", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// OTP Storage
+export const otps = pgTable("otps", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull(),
+  otp: text("otp").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+});
+
 // === SCHEMAS ===
 
 export const insertEmployeeSchema = createInsertSchema(employees).omit({ id: true, joinedAt: true });
@@ -80,8 +88,11 @@ export const insertManagerSchema = createInsertSchema(managers).omit({ id: true 
 export const insertProjectSchema = createInsertSchema(projects).omit({ id: true });
 export const insertFeedbackAssignmentSchema = createInsertSchema(feedbackAssignments).omit({ id: true });
 export const insertFeedback360Schema = createInsertSchema(feedback360).omit({ id: true, createdAt: true });
+export const insertOtpSchema = createInsertSchema(otps).omit({ id: true });
 
 // === TYPES ===
+export type Otp = typeof otps.$inferSelect;
+export type InsertOtp = z.infer<typeof insertOtpSchema>;
 
 export type Employee = typeof employees.$inferSelect;
 export type InsertEmployee = z.infer<typeof insertEmployeeSchema>;

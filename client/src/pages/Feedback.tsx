@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useEmployees } from "@/hooks/use-employees";
 import { useSubmitFeedback } from "@/hooks/use-feedback";
 import { LoadingScreen } from "@/components/LoadingScreen";
@@ -11,8 +11,16 @@ import { useQuery } from "@tanstack/react-query";
 import { FeedbackAssignment } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { InteractiveFeedbackForm } from "@/components/InteractiveFeedbackForm";
+import { useLocation, useSearch } from "wouter";
+import { useAuth } from "@/lib/auth";
+import { queryClient } from "@/lib/queryClient";
 
 export default function Feedback() {
+  const { user } = useAuth();
+  const search = useSearch();
+  const queryParams = new URLSearchParams(search);
+  const employeeIdFromUrl = queryParams.get("employeeId");
+
   const { data: employees, isLoading: isLoadingEmployees } = useEmployees({ active: "1" });
   const { data: assignments, isLoading: isLoadingAssignments } = useQuery<FeedbackAssignment[]>({
     queryKey: ["/api/feedback-assignment"],
@@ -22,23 +30,32 @@ export default function Feedback() {
   
   const employeesList = Array.isArray(employees?.data) ? employees.data : (Array.isArray(employees) ? employees : []);
 
-  const currentUserEmployeeId = "0001";
-  const assignedColleagueIds = assignments
-    ?.filter(a => a.peers?.includes(currentUserEmployeeId))
-    .map(a => a.employeeId) || [];
+  const currentUserEmployeeId = user?.employeeId || "0001";
+  const assignedColleagueIds = Array.isArray(assignments) 
+    ? assignments
+        .filter(a => Array.isArray(a.peers) && a.peers.includes(currentUserEmployeeId))
+        .map(a => a.employeeId)
+    : [];
 
   const assignedColleagues = employeesList.filter((emp: any) => 
     assignedColleagueIds.includes(emp.employee_id || emp.employeeId)
   );
 
   const [formData, setFormData] = useState({
-    employeeId: "",
+    employeeId: employeeIdFromUrl || "",
     feedbackType: "assigned",
     comments: "",
     strengths: "",
     areasOfImprovement: "",
     detailedRatings: [] as any[],
   });
+
+  // Effect to handle URL param changes
+  useEffect(() => {
+    if (employeeIdFromUrl) {
+      setFormData(prev => ({ ...prev, employeeId: employeeIdFromUrl }));
+    }
+  }, [employeeIdFromUrl]);
 
   const selectedEmployee = employeesList.find((emp: any) => (emp.employee_id || emp.employeeId) === formData.employeeId);
   const employeeRole = selectedEmployee?.designation || "Developer";
@@ -54,7 +71,7 @@ export default function Feedback() {
       employeeId: formData.employeeId,
       name: selectedEmployee?.name,
       reviewerId: currentUserEmployeeId, 
-      reviewerName: "Harry Pod",
+      reviewerName: user?.name || "Harry Pod",
       feedbackType: formData.feedbackType,
       comments: formData.comments,
       strengths: formData.strengths,
@@ -71,6 +88,8 @@ export default function Feedback() {
     mutate(submissionData, {
       onSuccess: () => {
         toast({ title: "Success!", description: "Feedback submitted successfully." });
+        queryClient.invalidateQueries({ queryKey: ["/api/feedback-assignment"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/feedback-360"] });
         setFormData({
           employeeId: "",
           feedbackType: "assigned",
@@ -107,62 +126,70 @@ export default function Feedback() {
       )}
 
       <div className="bg-white rounded-2xl shadow-lg shadow-slate-200/50 border border-slate-100 overflow-hidden">
-        <div className="bg-slate-50/50 p-6 border-b border-slate-100">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label>Who are you reviewing?</Label>
-              <Select 
-                value={formData.employeeId} 
-                onValueChange={(val) => setFormData({...formData, employeeId: val})}
-              >
-                <SelectTrigger className="bg-white h-11 rounded-xl">
-                  <SelectValue placeholder="Select a colleague..." />
-                </SelectTrigger>
-                <SelectContent className="bg-white border shadow-md">
-                  {assignedColleagues.length > 0 && (
-                    <div className="px-2 py-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                      Assigned to You
+        {/* Only show selection section if not coming from a direct link */}
+        {!employeeIdFromUrl && (
+          <div className="bg-slate-50/50 p-6 border-b border-slate-100">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label>Who are you reviewing?</Label>
+                <Select 
+                  value={formData.employeeId} 
+                  onValueChange={(val) => setFormData({...formData, employeeId: val})}
+                >
+                  <SelectTrigger className="bg-white h-11 rounded-xl">
+                    <SelectValue placeholder="Select a colleague..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border shadow-md">
+                    {assignedColleagues.length > 0 && (
+                      <div className="px-2 py-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                        Assigned to You
+                      </div>
+                    )}
+                    {assignedColleagues.map((emp: any) => (
+                      <SelectItem key={emp.employee_id || emp.employeeId} value={emp.employee_id || emp.employeeId}>
+                        {emp.name} — {emp.designation}
+                      </SelectItem>
+                    ))}
+                    <div className="px-2 py-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider border-t mt-1">
+                      All Colleagues
                     </div>
-                  )}
-                  {assignedColleagues.map((emp: any) => (
-                    <SelectItem key={emp.employee_id || emp.employeeId} value={emp.employee_id || emp.employeeId}>
-                      {emp.name} — {emp.designation}
-                    </SelectItem>
-                  ))}
-                  <div className="px-2 py-1.5 text-xs font-bold text-slate-400 uppercase tracking-wider border-t mt-1">
-                    All Colleagues
-                  </div>
-                  {employeesList.map((emp: any) => (
-                    <SelectItem key={emp.employee_id || emp.employeeId} value={emp.employee_id || emp.employeeId}>
-                      {emp.name} — {emp.designation}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Feedback Context</Label>
-              <Select 
-                value={formData.feedbackType} 
-                onValueChange={(val) => setFormData({...formData, feedbackType: val})}
-              >
-                <SelectTrigger className="bg-white h-11 rounded-xl">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-white border shadow-md">
-                  <SelectItem value="assigned">Assigned Review</SelectItem>
-                  <SelectItem value="optional">Unsolicited Feedback</SelectItem>
-                  <SelectItem value="project">Project Completion</SelectItem>
-                </SelectContent>
-              </Select>
+                    {employeesList.map((emp: any) => (
+                      <SelectItem key={emp.employee_id || emp.employeeId} value={emp.employee_id || emp.employeeId}>
+                        {emp.name} — {emp.designation}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Feedback Context</Label>
+                <Select 
+                  value={formData.feedbackType} 
+                  onValueChange={(val) => setFormData({...formData, feedbackType: val})}
+                >
+                  <SelectTrigger className="bg-white h-11 rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border shadow-md">
+                    <SelectItem value="assigned">Assigned Review</SelectItem>
+                    <SelectItem value="optional">Unsolicited Feedback</SelectItem>
+                    <SelectItem value="project">Project Completion</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <div className="p-8 space-y-8">
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-            <h3 className="text-lg font-bold text-slate-900">Performance Review</h3>
+            <div className="space-y-1">
+              <h3 className="text-lg font-bold text-slate-900">Performance Review</h3>
+              {employeeIdFromUrl && selectedEmployee && (
+                <p className="text-sm text-slate-500">Reviewing <b>{selectedEmployee.name}</b></p>
+              )}
+            </div>
             {formData.employeeId && (
               <div className="flex items-center gap-2 text-primary text-xs font-semibold bg-primary/5 px-3 py-1 rounded-full border border-primary/10">
                 <Sparkles className="h-3 w-3" /> Custom {employeeRole} Template

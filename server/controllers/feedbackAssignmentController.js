@@ -69,12 +69,15 @@ export const getAssignedToReviewer = async (req, res) => {
     });
     
     // Format for the "My Reviews" page
-    const formatted = assignments.map(a => ({
-      employeeId: a.employee_id,
-      employeeName: a.name,
-      status: a.status,
-      assignedDate: a.assigned.find(r => r.reviewer_id === reviewer_id)?.assigned_date
-    }));
+    const formatted = assignments.map(a => {
+      const assignmentInfo = a.assigned.find(r => r.reviewer_id === reviewer_id);
+      return {
+        employeeId: a.employee_id,
+        employeeName: a.name,
+        status: assignmentInfo?.status || a.status,
+        assignedDate: assignmentInfo?.assigned_date
+      };
+    });
 
     res.json({
       status: 'success',

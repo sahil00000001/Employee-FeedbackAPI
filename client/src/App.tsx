@@ -42,33 +42,41 @@ function Router() {
   return (
     <div className="flex min-h-screen bg-slate-50/50">
       <Sidebar />
-      <main className="flex-1 ml-64 p-8">
-        <Switch>
-          <Route path="/login" component={Login} />
-          <Route path="/">
-            <ProtectedRoute component={Dashboard} />
-          </Route>
-          <Route path="/employees">
-            <ProtectedRoute component={Employees} roles={["admin", "manager"]} />
-          </Route>
-          <Route path="/employees/:id">
-            {(params) => <ProtectedRoute component={() => <EmployeeDetail />} roles={["admin", "manager"]} />}
-          </Route>
-          <Route path="/projects">
-            <ProtectedRoute component={Projects} roles={["admin", "manager"]} />
-          </Route>
-          <Route path="/managers">
-            <ProtectedRoute component={Managers} roles={["admin"]} />
-          </Route>
-          <Route path="/feedback">
-            <ProtectedRoute component={Feedback} />
-          </Route>
-          <Route path="/my-reviews">
-            <ProtectedRoute component={MyReviews} />
-          </Route>
-          <Route component={NotFound} />
-        </Switch>
-      </main>
+      <div className="flex-1 flex flex-col ml-64">
+        <main className="flex-1 p-8">
+          <Switch>
+            <Route path="/login" component={Login} />
+            <Route path="/">
+              <ProtectedRoute component={Dashboard} />
+            </Route>
+            <Route path="/employees">
+              <ProtectedRoute component={Employees} roles={["admin", "manager"]} />
+            </Route>
+            <Route path="/employees/:id">
+              {(params) => <ProtectedRoute component={() => <EmployeeDetail />} roles={["admin", "manager"]} />}
+            </Route>
+            <Route path="/projects">
+              <ProtectedRoute component={Projects} roles={["admin", "manager"]} />
+            </Route>
+            <Route path="/managers">
+              <ProtectedRoute component={Managers} roles={["admin"]} />
+            </Route>
+            <Route path="/feedback">
+              <ProtectedRoute component={Feedback} />
+            </Route>
+            <Route path="/my-reviews">
+              <ProtectedRoute component={MyReviews} />
+            </Route>
+            <Route component={NotFound} />
+          </Switch>
+        </main>
+        <footer className="py-6 px-8 border-t border-slate-200 bg-white/50 backdrop-blur-sm">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-slate-500 text-sm">
+            <p>© {new Date().getFullYear()} Talent360 Performance Suite. All rights reserved.</p>
+            <p className="font-medium">Developed by <span className="text-primary">Sahil</span></p>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }

@@ -45,74 +45,50 @@ export default function Dashboard() {
     ? rawSubmittedList.filter((f: any) => f.reviewer_id === user?.employeeId)
     : [];
 
-  if (user?.role === "user") {
+  if (user?.role === "user" || user?.role === "employee") {
+    const completionRate = assignmentList.length > 0 
+      ? Math.round((submittedList.length / assignmentList.length) * 100) 
+      : 0;
+
     return (
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <div className="flex flex-col gap-1">
           <h1 className="text-3xl font-display font-bold text-slate-900 tracking-tight">My Performance Portal</h1>
-          <p className="text-slate-500">Welcome back, {user.name}. Track your feedback assignments.</p>
+          <p className="text-slate-500">Welcome back, {user.name}. Track your feedback assignments and progress.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <StatCard
-            title="Pending Reviews"
-            value={assignmentList.filter((a: any) => a.status !== 'completed').length}
-            icon={AlertCircle}
-            color="amber"
-          />
-          <StatCard
-            title="Total Assigned"
+            title="Feedback Assigned"
             value={assignmentList.length}
             icon={Users}
             color="purple"
           />
           <StatCard
-            title="Completed"
-            value={submittedList.length}
+            title="Feedback Completed"
+            value={`${submittedList.length} / ${assignmentList.length}`}
             icon={Users}
             color="emerald"
+          />
+          <StatCard
+            title="Completion Rate"
+            value={`${completionRate}%`}
+            icon={TrendingUp}
+            color="primary"
           />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <Card className="border-none shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg font-bold">Reviews Assigned to Me</CardTitle>
-              <CardDescription>People waiting for your valuable feedback</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {assignmentList.slice(0, 3).map((review: any, i: number) => (
-                  <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-100 group hover:border-primary/30 transition-all cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-white border border-slate-200 flex items-center justify-center font-bold text-primary">
-                        {review.employeeName?.split(' ').map((n: string) => n[0]).join('') || 'U'}
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-900">{review.employeeName}</p>
-                        <p className="text-xs text-slate-500">Assigned on {new Date(review.assignedDate).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                    <Badge variant={review.status === "pending" ? "secondary" : "default"} className="rounded-full px-3 capitalize">
-                      {review.status}
-                    </Badge>
-                  </div>
-                ))}
-                {assignmentList.length === 0 && (
-                  <p className="text-center py-6 text-slate-500 text-sm">No assignments found.</p>
-                )}
+            <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
+              <div>
+                <CardTitle className="text-lg font-bold">Latest Feedback Updated</CardTitle>
+                <CardDescription>Recent reviews you have submitted</CardDescription>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg font-bold">My Completed Reviews</CardTitle>
-              <CardDescription>History of feedback you've successfully submitted</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {submittedList.slice(0, 3).map((review: any, i: number) => (
+                {submittedList.slice(0, 5).map((review: any, i: number) => (
                   <div key={i} className="flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-white group hover:bg-slate-50 transition-all">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center font-bold text-emerald-600">
@@ -123,14 +99,54 @@ export default function Dashboard() {
                         <p className="text-xs text-slate-500">Submitted on {new Date(review.submitted_date || review.createdAt).toLocaleDateString()}</p>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm" className="h-8 gap-2 text-primary hover:text-primary hover:bg-primary/5">
-                      <Pencil className="h-4 w-4" />
-                      Edit
-                    </Button>
+                    <Link href={`/feedback?employeeId=${review.employee_id || review.employeeId}`}>
+                      <Button variant="ghost" size="sm" className="h-8 gap-2 text-primary hover:text-primary hover:bg-primary/5">
+                        <Pencil className="h-4 w-4" />
+                        Edit
+                      </Button>
+                    </Link>
                   </div>
                 ))}
                 {submittedList.length === 0 && (
-                  <p className="text-center py-6 text-slate-500 text-sm">No completed feedbacks yet.</p>
+                  <div className="text-center py-10 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+                    <p className="text-slate-500 text-sm">No feedback submitted yet.</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
+              <div>
+                <CardTitle className="text-lg font-bold">Pending Assignments</CardTitle>
+                <CardDescription>People waiting for your valuable feedback</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {assignmentList.filter((a: any) => a.status !== 'completed').slice(0, 5).map((review: any, i: number) => (
+                  <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-100 group hover:border-primary/30 transition-all cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-white border border-slate-200 flex items-center justify-center font-bold text-primary">
+                        {review.employeeName?.split(' ').map((n: string) => n[0]).join('') || 'U'}
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-900">{review.employeeName}</p>
+                        <p className="text-xs text-slate-500">Assigned on {new Date(review.assignedDate).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    <Link href={`/feedback?employeeId=${review.employeeId}`}>
+                      <Badge variant={review.status === "pending" ? "secondary" : "default"} className="rounded-full px-3 capitalize cursor-pointer">
+                        {review.status}
+                      </Badge>
+                    </Link>
+                  </div>
+                ))}
+                {assignmentList.filter((a: any) => a.status !== 'completed').length === 0 && (
+                  <div className="text-center py-10 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+                    <p className="text-slate-500 text-sm">All caught up! No pending assignments.</p>
+                  </div>
                 )}
               </div>
             </CardContent>

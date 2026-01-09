@@ -1,23 +1,26 @@
 
 import { 
-  employees, managers, projects, projectMembers, feedbackAssignments, feedback360,
+  employees, managers, projects, projectMembers, feedbackAssignments, feedback360, otps,
   type Employee, type InsertEmployee,
   type Manager, type InsertManager,
   type Project, type InsertProject,
-  type Feedback360, type InsertFeedback360
+  type Feedback360, type InsertFeedback360,
+  type Otp, type InsertOtp
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, inArray, and } from "drizzle-orm";
+import { eq, inArray, and, lt } from "drizzle-orm";
 
 export interface IStorage {
   // Employees
   getEmployees(filters?: { active?: boolean, department?: string }): Promise<Employee[]>;
   getEmployee(employeeId: string): Promise<Employee | undefined>;
+  getEmployeeByEmail(email: string): Promise<Employee | undefined>;
   createEmployee(employee: InsertEmployee): Promise<Employee>;
   
   // Managers
   getManagers(): Promise<Manager[]>;
   getManager(managerId: string): Promise<Manager | undefined>;
+  getManagerByEmail(email: string): Promise<Manager | undefined>;
   getManagerTeam(managerId: string): Promise<Employee[]>;
   createManager(manager: InsertManager): Promise<Manager>;
 
@@ -31,6 +34,11 @@ export interface IStorage {
   // Feedback
   createFeedback(feedback: InsertFeedback360): Promise<Feedback360>;
   getFeedbackForEmployee(employeeId: string): Promise<Feedback360[]>;
+
+  // OTP
+  createOtp(otp: InsertOtp): Promise<Otp>;
+  getOtp(email: string, otp: string): Promise<Otp | undefined>;
+  deleteExpiredOtps(): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -58,6 +66,11 @@ export class DatabaseStorage implements IStorage {
     return employee;
   }
 
+  async getEmployeeByEmail(email: string): Promise<Employee | undefined> {
+    const [employee] = await db.select().from(employees).where(eq(employees.email, email));
+    return employee;
+  }
+
   async createEmployee(employee: InsertEmployee): Promise<Employee> {
     const [newEmployee] = await db.insert(employees).values(employee).returning();
     return newEmployee;
@@ -70,6 +83,11 @@ export class DatabaseStorage implements IStorage {
 
   async getManager(managerId: string): Promise<Manager | undefined> {
     const [manager] = await db.select().from(managers).where(eq(managers.managerId, managerId));
+    return manager;
+  }
+
+  async getManagerByEmail(email: string): Promise<Manager | undefined> {
+    const [manager] = await db.select().from(managers).where(eq(managers.email, email));
     return manager;
   }
 
@@ -124,6 +142,26 @@ export class DatabaseStorage implements IStorage {
 
   async getFeedbackForEmployee(employeeId: string): Promise<Feedback360[]> {
     return await db.select().from(feedback360).where(eq(feedback360.employeeId, employeeId));
+  }
+
+  // OTP
+  async createOtp(otp: InsertOtp): Promise<Otp> {
+    const [newOtp] = await db.insert(otps).values(otp).returning();
+    return newOtp;
+  }
+
+  async getOtp(email: string, otp: string): Promise<Otp | undefined> {
+    const [record] = await db.select().from(otps).where(
+      and(
+        eq(otps.email, email),
+        eq(otps.otp, otp)
+      )
+    );
+    return record;
+  }
+
+  async deleteExpiredOtps(): Promise<void> {
+    await db.delete(otps).where(lt(otps.expiresAt, new Date()));
   }
 }
 

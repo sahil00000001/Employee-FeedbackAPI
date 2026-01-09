@@ -1,4 +1,5 @@
 import { Feedback } from '../models/Feedback.js';
+import { Assignment } from '../models/Assignment.js';
 import { calculateOverallRating, calculateCategoryAverages } from '../utils/calculations.js';
 
 // Get all feedback
@@ -44,6 +45,28 @@ export const submitFeedback = async (req, res) => {
     });
 
     await feedback.save();
+
+    // Update the assignment status for this reviewer
+    await Assignment.updateOne(
+      { 
+        employee_id: feedbackData.employeeId,
+        "assigned.reviewer_id": feedbackData.reviewerId 
+      },
+      { 
+        $set: { 
+          "assigned.$.status": "completed",
+          "assigned.$.submitted_date": new Date()
+        } 
+      }
+    );
+
+    // Check if all reviewers for this employee have completed their feedback
+    const assignment = await Assignment.findOne({ employee_id: feedbackData.employeeId });
+    if (assignment && assignment.assigned.every(a => a.status === 'completed')) {
+      assignment.status = 'completed';
+      assignment.updated_at = new Date();
+      await assignment.save();
+    }
     
     res.status(201).json({
       status: 'success',
