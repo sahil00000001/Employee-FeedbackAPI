@@ -38,13 +38,15 @@ The backend uses a controller-based pattern:
 - `/server/models/` - Mongoose schema definitions
 - `/server/config/db.js` - MongoDB connection configuration
 
-### Data Models
-MongoDB collections map to these entities:
-- `Total_Company` → Employees
-- `Managers` → Manager records
-- `Project_Details` → Projects with team members
-- `Assign_Feedback` → Peer reviewer assignments
-- `360_Feedback` → Submitted feedback with ratings
+### Data Storage (MongoDB Atlas)
+The application uses MongoDB Atlas for all data persistence. You can find the data in the following collections:
+- `Total_Company`: Stores employee profiles (Name, Department, Project, Designation, etc.)
+- `360_Feedback`: Stores all submitted peer reviews, ratings, strengths, and improvement areas.
+- `Project_Details`: Contains project information and assigned teams.
+- `Assign_Feedback`: Tracks which employees are assigned to review each other.
+- `Managers`: Stores manager details and team assignments.
+
+You can view this data by logging into your MongoDB Atlas dashboard and navigating to the database named in your `MONGODB_URI` connection string.
 
 ### API Structure
 RESTful endpoints prefixed with `/api/`:

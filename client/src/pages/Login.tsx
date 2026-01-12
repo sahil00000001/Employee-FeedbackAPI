@@ -42,15 +42,15 @@ export default function Login() {
     e.preventDefault();
     
     // Quick admin/manager/user login with bypass
-    if (email === "admin" && otp === "admin") {
+    if (email.toLowerCase() === "admin" && otp.toLowerCase() === "admin") {
       loginWithOtp({ name: "Administrator", role: "admin" }, "admin");
       return;
     }
-    if (email === "manager" && otp === "manager") {
+    if (email.toLowerCase() === "manager" && otp.toLowerCase() === "manager") {
       loginWithOtp({ name: "Project Manager", role: "manager", employeeId: "1066" }, "manager");
       return;
     }
-    if (email === "user" && otp === "user") {
+    if (email.toLowerCase() === "user" && otp.toLowerCase() === "user") {
       loginWithOtp({ name: "Standard User", role: "user", employeeId: "0001" }, "user");
       return;
     }
@@ -100,7 +100,7 @@ export default function Login() {
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                   <Input
                     id="email"
-                    type="email"
+                    type="text"
                     placeholder="name@podtech.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}

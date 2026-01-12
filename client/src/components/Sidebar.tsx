@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Users, FolderKanban, MessageSquarePlus, LogOut, ClipboardList } from "lucide-react";
+import { LayoutDashboard, Users, FolderKanban, MessageSquarePlus, LogOut, ClipboardList, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 
@@ -10,10 +10,12 @@ export function Sidebar() {
   const navigation = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard, roles: ["admin", "manager", "employee", "user"] },
     { name: "Employees", href: "/employees", icon: Users, roles: ["admin", "manager"] },
+    { name: "KRA Assignment", href: "/employees", icon: ClipboardList, roles: ["employee"] },
     { name: "Projects", href: "/projects", icon: FolderKanban, roles: ["admin", "manager"] },
     { name: "Managers", href: "/managers", icon: Users, roles: ["admin"] },
-    { name: "My Feedbacks", href: "/my-reviews", icon: ClipboardList, roles: ["admin", "manager", "employee", "user"] },
-    { name: "Feedback", href: "/feedback", icon: MessageSquarePlus, roles: ["admin", "manager", "employee", "user"] },
+    { name: "Overall Feedback", href: "/overall-feedback", icon: BarChart3, roles: ["admin"] },
+    { name: "My Feedbacks", href: "/my-reviews", icon: ClipboardList, roles: ["manager", "employee", "user"] },
+    { name: "Feedback", href: "/feedback", icon: MessageSquarePlus, roles: ["manager", "employee", "user"] },
   ].filter(item => item.roles.includes(user?.role || ""));
 
   return (

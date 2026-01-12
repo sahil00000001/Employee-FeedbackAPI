@@ -3,7 +3,7 @@ import { useEmployees } from "@/hooks/use-employees";
 import { useProjects } from "@/hooks/use-projects";
 import { useQuery } from "@tanstack/react-query";
 import { StatCard } from "@/components/StatCard";
-import { Users, Briefcase, TrendingUp, AlertCircle, Pencil } from "lucide-react";
+import { Users, Briefcase, TrendingUp, AlertCircle, Pencil, ClipboardList, ExternalLink } from "lucide-react";
 import { LoadingScreen, ErrorScreen } from "@/components/LoadingScreen";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,11 @@ export default function Dashboard() {
 
   const { data: submittedFeedback } = useQuery<any>({
     queryKey: ["/api/feedback-360"],
+  });
+
+  const { data: kraAssessment } = useQuery<any>({
+    queryKey: ["/api/kra", user?.employeeId],
+    enabled: !!user?.employeeId,
   });
 
   if (loadingEmployees || loadingProjects) return <LoadingScreen />;
@@ -45,7 +50,10 @@ export default function Dashboard() {
     ? rawSubmittedList.filter((f: any) => f.reviewer_id === user?.employeeId)
     : [];
 
-  if (user?.role === "user" || user?.role === "employee") {
+  if (user?.role === "user" || user?.role === ("employee" as any)) {
+    const isKraFilled = !!kraAssessment?.data;
+    const kraStatus = kraAssessment?.data?.status || "Not Started";
+
     const completionRate = assignmentList.length > 0 
       ? Math.round((submittedList.length / assignmentList.length) * 100) 
       : 0;
@@ -57,7 +65,7 @@ export default function Dashboard() {
           <p className="text-slate-500">Welcome back, {user.name}. Track your feedback assignments and progress.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <StatCard
             title="Feedback Assigned"
             value={assignmentList.length}
@@ -76,6 +84,29 @@ export default function Dashboard() {
             icon={TrendingUp}
             color="primary"
           />
+          <Card className={`border-none shadow-sm ${isKraFilled ? 'bg-emerald-50' : 'bg-amber-50'}`}>
+            <CardContent className="p-6 flex flex-col justify-between h-full">
+              <div className="flex items-center justify-between mb-2">
+                <div className={`p-2 rounded-lg ${isKraFilled ? 'bg-emerald-500/10 text-emerald-600' : 'bg-amber-500/10 text-amber-600'}`}>
+                  <ClipboardList className="h-5 w-5" />
+                </div>
+                <Badge variant={isKraFilled ? "default" : "secondary"} className="rounded-full capitalize">
+                  {kraStatus}
+                </Badge>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">KRA Status</p>
+                <div className="flex items-center justify-between mt-1">
+                  <h3 className="text-2xl font-black text-slate-900">{isKraFilled ? "Filled" : "Pending"}</h3>
+                  <Link href="/employees">
+                    <Button size="sm" variant="ghost" className="h-8 gap-1 text-xs font-bold text-primary hover:bg-primary/5">
+                      {isKraFilled ? "View" : "Fill"} <ExternalLink className="h-3 w-3" />
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

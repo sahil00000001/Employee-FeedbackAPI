@@ -13,6 +13,7 @@ import managerRoutes from './routes/managers.js';
 import projectRoutes from './routes/projects.js';
 import feedbackAssignmentRoutes from './routes/feedbackAssignment.js';
 import feedback360Routes from './routes/feedback360.js';
+import kraRoutes from './routes/kra.js';
 
 export async function registerRoutes(
   httpServer: Server,
@@ -24,6 +25,14 @@ export async function registerRoutes(
 
   // Connect to MongoDB
   connectDB();
+
+  // Prefix all routes with /api
+  app.use('/api/employees', employeeRoutes);
+  app.use('/api/managers', managerRoutes);
+  app.use('/api/projects', projectRoutes);
+  app.use('/api/feedback-assignment', feedbackAssignmentRoutes);
+  app.use('/api/feedback-360', feedback360Routes);
+  app.use('/api/kra', kraRoutes);
 
   // Auth/OTP Routes
   app.post("/api/auth/otp/request", async (req, res) => {

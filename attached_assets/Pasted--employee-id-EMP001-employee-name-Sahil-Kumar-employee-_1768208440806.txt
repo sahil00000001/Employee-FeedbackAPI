@@ -1,0 +1,279 @@
+{
+  "employee_id": "EMP001",
+  "employee_name": "Sahil Kumar",
+  "employee_email": "sahil@podtech.com",
+  "designation": "Software Developer",
+  "department": "Development Team B",
+  "reporting_manager": "Deepak",
+  "assessment_year": 2025,
+  "assessment_period": "2024-2025",
+  "status": "Draft",
+  
+  "educational_background": [
+    { "field_name": "Highest Qualification", "field_value": "B.Tech", "field_type": "text" },
+    { "field_name": "Specialization", "field_value": "Computer Science", "field_type": "text" },
+    { "field_name": "University", "field_value": "XYZ University", "field_type": "text" },
+    { "field_name": "Graduation Year", "field_value": "2020", "field_type": "number" },
+    { "field_name": "CGPA", "field_value": "8.5", "field_type": "number" },
+    { "field_name": "AWS Certification", "field_value": "Solutions Architect", "field_type": "text", "additional_info": "Valid till 2026" },
+    { "field_name": "MongoDB Certification", "field_value": "Associate Developer", "field_type": "text", "additional_info": "Completed Dec 2024" }
+  ],
+  
+  "achievements": [
+    {
+      "achievement_id": "ACH_001",
+      "title": "Employee Performance System Launch",
+      "category": "Project",
+      "description": "Successfully delivered complete performance management system",
+      "date": "2024-12-01",
+      "impact_level": "High",
+      "custom_fields": [
+        { "field_name": "Users Impacted", "field_value": "67", "field_type": "number" },
+        { "field_name": "Modules Delivered", "field_value": "6", "field_type": "number" },
+        { "field_name": "On Time Delivery", "field_value": "Yes", "field_type": "text" }
+      ]
+    },
+    {
+      "achievement_id": "ACH_002",
+      "title": "Report Zero Website Enhancement",
+      "category": "Project",
+      "description": "Improved website performance and user experience",
+      "date": "2024-11-15",
+      "impact_level": "Medium",
+      "custom_fields": [
+        { "field_name": "Page Load Improvement", "field_value": "40%", "field_type": "text" },
+        { "field_name": "SEO Score", "field_value": "95", "field_type": "number" }
+      ]
+    },
+    {
+      "achievement_id": "ACH_003",
+      "title": "smFurnishings E-commerce Platform",
+      "category": "Personal Initiative",
+      "description": "Built full-stack e-commerce platform for bedding products",
+      "date": "2024-10-01",
+      "impact_level": "High",
+      "custom_fields": [
+        { "field_name": "Revenue Generated", "field_value": "500000", "field_type": "number" },
+        { "field_name": "Monthly Orders", "field_value": "50", "field_type": "number" }
+      ]
+    }
+  ],
+  
+  "contributions": {
+    "projects": [
+      {
+        "project_id": "PRJ_001",
+        "project_name": "Employee Increment & 360 Feedback System",
+        "project_type": "Development",
+        "role": "Full Stack Developer",
+        "start_date": "2024-08-01",
+        "end_date": "2024-12-31",
+        "status": "Completed",
+        "outcome": "Successfully deployed with positive feedback",
+        "custom_fields": [
+          { "field_name": "Technology Stack", "field_value": "Node.js, Express, MongoDB, React, TypeScript", "field_type": "text" },
+          { "field_name": "Lines of Code", "field_value": "15000", "field_type": "number" },
+          { "field_name": "API Endpoints Created", "field_value": "45", "field_type": "number" },
+          { "field_name": "Database Collections", "field_value": "8", "field_type": "number" }
+        ]
+      },
+      {
+        "project_id": "PRJ_002",
+        "project_name": "Report Zero WordPress Site",
+        "project_type": "Development",
+        "role": "Frontend Developer",
+        "start_date": "2024-06-01",
+        "end_date": "2024-11-30",
+        "status": "Completed",
+        "outcome": "Enhanced user experience and site performance",
+        "custom_fields": [
+          { "field_name": "Tools Used", "field_value": "WordPress, Elementor, CSS, JavaScript", "field_type": "text" },
+          { "field_name": "Pages Updated", "field_value": "25", "field_type": "number" }
+        ]
+      }
+    ],
+    
+    "initiatives": [
+      {
+        "initiative_id": "INI_001",
+        "initiative_name": "Code Review Process Implementation",
+        "description": "Introduced structured code review process in team",
+        "impact": "Reduced bugs by 30%",
+        "date": "2024-09-01",
+        "custom_fields": [
+          { "field_name": "Team Members Trained", "field_value": "8", "field_type": "number" },
+          { "field_name": "Review Hours Per Week", "field_value": "5", "field_type": "number" }
+        ]
+      }
+    ],
+    
+    "process_improvements": [
+      {
+        "improvement_id": "IMP_001",
+        "title": "MongoDB Query Optimization",
+        "description": "Optimized database queries reducing response time",
+        "impact": "50% faster query execution",
+        "custom_fields": [
+          { "field_name": "Queries Optimized", "field_value": "20", "field_type": "number" },
+          { "field_name": "Time Saved Per Query", "field_value": "500ms", "field_type": "text" }
+        ]
+      }
+    ]
+  },
+  
+  "learning_growth": {
+    "skills_acquired": [
+      { "skill_id": "SKL_001", "skill_name": "MongoDB Advanced Queries", "proficiency_level": "Advanced", "acquired_date": "2024-06-01", "how_acquired": "On-the-job" },
+      { "skill_id": "SKL_002", "skill_name": "TypeScript", "proficiency_level": "Intermediate", "acquired_date": "2024-07-01", "how_acquired": "Self-learning" },
+      { "skill_id": "SKL_003", "skill_name": "React Hooks", "proficiency_level": "Advanced", "acquired_date": "2024-05-01", "how_acquired": "Training" },
+      { "skill_id": "SKL_004", "skill_name": "WordPress Development", "proficiency_level": "Intermediate", "acquired_date": "2024-08-01", "how_acquired": "On-the-job" }
+    ],
+    
+    "training_courses": [
+      { "training_id": "TRN_001", "training_name": "MongoDB University M220JS", "provider": "MongoDB University", "completion_date": "2024-06-15", "duration_hours": 20, "certification_received": true },
+      { "training_id": "TRN_002", "training_name": "Advanced React Patterns", "provider": "Udemy", "completion_date": "2024-07-20", "duration_hours": 15, "certification_received": false }
+    ]
+  },
+  
+  "ctc_information": {
+    "current_ctc": 600000,
+    "current_ctc_breakup": [
+      { "component_name": "Base Salary", "component_value": 400000, "percentage": 66.67 },
+      { "component_name": "HRA", "component_value": 100000, "percentage": 16.67 },
+      { "component_name": "Special Allowance", "component_value": 80000, "percentage": 13.33 },
+      { "component_name": "Variable Pay", "component_value": 20000, "percentage": 3.33 }
+    ],
+    "expected_ctc": 750000,
+    "increment_percentage": 25,
+    "increment_amount": 150000,
+    "justification": "Led multiple critical projects, acquired new technical skills, demonstrated leadership in team initiatives"
+  },
+  
+  "kra_metrics": [
+    {
+      "kra_id": "KRA_001",
+      "kra_title": "Project Delivery",
+      "kra_description": "Deliver assigned projects on time with quality",
+      "kra_category": "Technical",
+      "assigned_date": "2024-04-01",
+      "target_date": "2024-12-31",
+      "completion_date": "2024-12-15",
+      "weightage": 40,
+      "priority": "High",
+      "metrics": [
+        { "metric_name": "Projects Completed", "target_value": "3", "achieved_value": "4", "unit": "count", "achievement_percentage": 133 },
+        { "metric_name": "On-Time Delivery", "target_value": "90", "achieved_value": "100", "unit": "percentage", "achievement_percentage": 111 },
+        { "metric_name": "Code Quality Score", "target_value": "85", "achieved_value": "92", "unit": "score", "achievement_percentage": 108 }
+      ],
+      "self_rating": 5,
+      "manager_rating": 4.5,
+      "final_rating": 4.5,
+      "status": "Completed",
+      "comments": {
+        "self_comments": "Successfully delivered all projects ahead of schedule",
+        "manager_comments": "Excellent performance, exceeded expectations"
+      }
+    },
+    {
+      "kra_id": "KRA_002",
+      "kra_title": "Skill Development",
+      "kra_description": "Learn and implement new technologies",
+      "kra_category": "Learning",
+      "assigned_date": "2024-04-01",
+      "target_date": "2024-12-31",
+      "completion_date": "2024-12-01",
+      "weightage": 20,
+      "priority": "Medium",
+      "metrics": [
+        { "metric_name": "New Skills Acquired", "target_value": "2", "achieved_value": "4", "unit": "count", "achievement_percentage": 200 },
+        { "metric_name": "Certifications Completed", "target_value": "1", "achieved_value": "2", "unit": "count", "achievement_percentage": 200 },
+        { "metric_name": "Training Hours", "target_value": "20", "achieved_value": "35", "unit": "hours", "achievement_percentage": 175 }
+      ],
+      "self_rating": 5,
+      "manager_rating": 5,
+      "final_rating": 5,
+      "status": "Completed"
+    },
+    {
+      "kra_id": "KRA_003",
+      "kra_title": "Team Collaboration",
+      "kra_description": "Collaborate effectively with team members",
+      "kra_category": "Leadership",
+      "assigned_date": "2024-04-01",
+      "target_date": "2024-12-31",
+      "weightage": 25,
+      "priority": "High",
+      "metrics": [
+        { "metric_name": "Code Reviews Conducted", "target_value": "50", "achieved_value": "65", "unit": "count", "achievement_percentage": 130 },
+        { "metric_name": "Knowledge Sharing Sessions", "target_value": "4", "achieved_value": "6", "unit": "count", "achievement_percentage": 150 },
+        { "metric_name": "Team Satisfaction Score", "target_value": "80", "achieved_value": "90", "unit": "score", "achievement_percentage": 112.5 }
+      ],
+      "self_rating": 4,
+      "manager_rating": 4.5,
+      "final_rating": 4.5,
+      "status": "Completed"
+    },
+    {
+      "kra_id": "KRA_004",
+      "kra_title": "Process Improvement",
+      "kra_description": "Identify and implement process improvements",
+      "kra_category": "Technical",
+      "assigned_date": "2024-04-01",
+      "target_date": "2024-12-31",
+      "weightage": 15,
+      "priority": "Low",
+      "metrics": [
+        { "metric_name": "Improvements Implemented", "target_value": "2", "achieved_value": "3", "unit": "count", "achievement_percentage": 150 },
+        { "metric_name": "Time Saved", "target_value": "10", "achieved_value": "15", "unit": "hours", "achievement_percentage": 150 }
+      ],
+      "self_rating": 4,
+      "manager_rating": 4,
+      "final_rating": 4,
+      "status": "Completed"
+    }
+  ],
+  
+  "overall_assessment": {
+    "self_overall_rating": 4.5,
+    "manager_overall_rating": 4.5,
+    "final_rating": 4.5,
+    "performance_category": "Exceeds Expectations",
+    "performance_score": 95.5,
+    "strengths": [
+      "Strong technical skills in full-stack development",
+      "Excellent project delivery track record",
+      "Proactive in learning new technologies",
+      "Great team player and collaborator"
+    ],
+    "areas_of_improvement": [
+      "Can improve time management for parallel projects",
+      "Could enhance documentation practices"
+    ]
+  },
+  
+  "custom_sections": [
+    {
+      "section_id": "CS_001",
+      "section_name": "Client Feedback",
+      "section_description": "Feedback received from clients",
+      "section_data": [
+        { "field_name": "Report Zero Feedback", "field_value": "Excellent work on website", "field_type": "text" },
+        { "field_name": "Client Satisfaction Score", "field_value": "9.5", "field_type": "number" }
+      ]
+    },
+    {
+      "section_id": "CS_002",
+      "section_name": "Awards & Recognition",
+      "section_description": "Awards and recognition received",
+      "section_data": [
+        { "field_name": "Employee of the Month", "field_value": "September 2024", "field_type": "text" },
+        { "field_name": "Best Performer Award", "field_value": "Q3 2024", "field_type": "text" }
+      ]
+    }
+  ],
+  
+  "created_at": "2025-01-01T00:00:00Z",
+  "updated_at": "2025-01-12T10:30:00Z",
+  "created_by": "sahil@podtech.com",
+  "last_updated_by": "sahil@podtech.com"
+}
