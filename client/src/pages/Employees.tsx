@@ -140,23 +140,27 @@ export default function Employees() {
                           <Edit2 className="h-3 w-3" />
                           {(() => {
                             const assessment = assessments?.data?.find((a: any) => a.employee_id === employee.employee_id);
-                            const status = assessment?.status || "Not Started";
+                            const status = (assessment?.status || "Not Started").toLowerCase();
+                            const isCompleted = status === "submitted" || status === "completed";
+                            
                             if (user?.role === ("employee" as any)) {
-                              return status === "Submitted" ? "View My Assessment" : "Fill My Assessment";
+                              return isCompleted ? "View My Assessment" : "Fill My Assessment";
                             }
-                            return status === "Submitted" ? "View Assessment" : "Assess Performance";
+                            return isCompleted ? "View Assessment" : "Assess Performance";
                           })()}
                         </Button>
                       </Link>
                       {(() => {
                         const assessment = assessments?.data?.find((a: any) => a.employee_id === employee.employee_id);
-                        const status = assessment?.status || "Not Started";
+                        const status = (assessment?.status || "Not Started").toLowerCase();
+                        const isCompleted = status === "submitted" || status === "completed";
+                        
                         return (
                           <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md w-fit ${
-                            status === "Submitted" ? "bg-emerald-100 text-emerald-700 border border-emerald-200" : 
-                            status === "Draft" ? "bg-amber-100 text-amber-700 border border-amber-200" : "bg-slate-100 text-slate-500 border border-slate-200"
+                            isCompleted ? "bg-emerald-100 text-emerald-700 border border-emerald-200" : 
+                            status === "draft" ? "bg-amber-100 text-amber-700 border border-amber-200" : "bg-slate-100 text-slate-500 border border-slate-200"
                           }`}>
-                            {status === "Submitted" ? "COMPLETED" : status}
+                            {isCompleted ? "COMPLETED" : status.toUpperCase()}
                           </span>
                         );
                       })()}

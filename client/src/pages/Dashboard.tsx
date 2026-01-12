@@ -51,7 +51,8 @@ export default function Dashboard() {
     : [];
 
   if (user?.role === "user" || user?.role === ("employee" as any)) {
-    const isKraFilled = !!kraAssessment?.data;
+    const status = (kraAssessment?.data?.status || "Not Started").toLowerCase();
+    const isKraFilled = status === "completed" || status === "submitted";
     const kraStatus = kraAssessment?.data?.status || "Not Started";
 
     const completionRate = assignmentList.length > 0 

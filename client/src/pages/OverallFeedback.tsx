@@ -60,6 +60,10 @@ export default function OverallFeedback() {
     queryKey: ["/api/feedback-assignment"],
   });
 
+  const { data: kraAssessmentsResponse } = useQuery<any>({
+    queryKey: ["/api/kra"],
+  });
+
   const getEmployeeInfo = (name: string) => {
     const empList = Array.isArray(employees?.data) ? employees.data : (Array.isArray(employees) ? employees : []);
     const emp = empList.find((e: any) => e.name === name);
@@ -76,6 +80,10 @@ export default function OverallFeedback() {
 
   const downloadReport = (personName: string, personFeedback: FeedbackRecord[]) => {
     const empInfo = getEmployeeInfo(personName);
+    const kraData = Array.isArray(kraAssessmentsResponse?.data) 
+      ? kraAssessmentsResponse.data.find((k: any) => k.employee_id === empInfo?.employee_id)
+      : null;
+
     const doc = new jsPDF();
     
     // Header styling
@@ -101,6 +109,91 @@ export default function OverallFeedback() {
     doc.text(`Department: ${empInfo?.department || "N/A"}`, 80, 52);
     doc.text(`Project: ${empInfo?.project || "N/A"}`, 14, 59);
     doc.text(`Reporting Manager: ${empInfo?.reporting_manager || "N/A"}`, 14, 66);
+
+    let currentY = 75;
+
+    // KRA Assessment Section
+    if (kraData) {
+      doc.setFontSize(14);
+      doc.setTextColor(31, 41, 55);
+      doc.text(`KRA Assessment Summary`, 14, currentY);
+      currentY += 10;
+
+      // KRA Metrics Table
+      if (Array.isArray(kraData.kra_metrics) && kraData.kra_metrics.length > 0) {
+        doc.setFontSize(11);
+        doc.text("Performance Metrics", 14, currentY);
+        currentY += 5;
+        
+        autoTable(doc, {
+          startY: currentY,
+          head: [['Metric/KRA Title', 'Weightage', 'Self Rating', 'Priority']],
+          body: kraData.kra_metrics.map((m: any) => [
+            m.kra_title || "N/A",
+            `${m.weightage || 0}%`,
+            m.self_rating || "N/A",
+            m.priority || "N/A"
+          ]),
+          theme: 'striped',
+          headStyles: { fillColor: [100, 116, 139] },
+          margin: { left: 14 }
+        });
+        currentY = (doc as any).lastAutoTable.finalY + 15;
+      }
+
+      // Achievements
+      if (Array.isArray(kraData.achievements) && kraData.achievements.length > 0) {
+        if (currentY > 250) { doc.addPage(); currentY = 20; }
+        doc.setFontSize(11);
+        doc.text("Key Achievements", 14, currentY);
+        currentY += 5;
+        
+        autoTable(doc, {
+          startY: currentY,
+          head: [['Title', 'Impact', 'Description']],
+          body: kraData.achievements.map((a: any) => [
+            a.title || "N/A",
+            a.impact_level || "N/A",
+            a.description || "N/A"
+          ]),
+          theme: 'grid',
+          headStyles: { fillColor: [100, 116, 139] },
+          columnStyles: { 2: { cellWidth: 100 } },
+          margin: { left: 14 }
+        });
+        currentY = (doc as any).lastAutoTable.finalY + 15;
+      }
+
+      // Self Assessment Comments
+      if (kraData.overall_assessment?.self_overall_rating || kraData.ctc_information?.justification) {
+        if (currentY > 250) { doc.addPage(); currentY = 20; }
+        doc.setFontSize(11);
+        doc.text("Self Assessment Overview", 14, currentY);
+        currentY += 7;
+        doc.setFontSize(10);
+        doc.text(`Overall Self Rating: ${kraData.overall_assessment?.self_overall_rating || "N/A"}/5`, 14, currentY);
+        currentY += 7;
+        if (kraData.ctc_information?.justification) {
+          doc.text("Increment Justification:", 14, currentY);
+          currentY += 5;
+          const splitJustification = doc.splitTextToSize(kraData.ctc_information.justification, 180);
+          doc.text(splitJustification, 14, currentY);
+          currentY += (splitJustification.length * 5) + 10;
+        }
+      }
+    } else {
+      doc.setFontSize(12);
+      doc.setTextColor(156, 163, 175);
+      doc.text("No KRA Assessment data available for this period.", 14, currentY);
+      currentY += 15;
+    }
+
+    // Peer Feedback Section
+    if (currentY > 250) { doc.addPage(); currentY = 20; }
+    doc.setFontSize(14);
+    doc.setTextColor(31, 41, 55);
+    doc.text(`360-Degree Feedback`, 14, currentY);
+    currentY += 10;
     
     const tableData = personFeedback.map(fb => {
       const ratings = fb.ratings || {};
@@ -124,7 +217,7 @@ export default function OverallFeedback() {
     });
 
     autoTable(doc, {
-      startY: 75,
+      startY: currentY,
       head: [['Reviewer', 'Ratings Detail', 'Strengths', 'Improvements', 'Comments']],
       body: tableData,
       theme: 'grid',
@@ -135,7 +228,7 @@ export default function OverallFeedback() {
       },
       styles: { 
         fontSize: 9, 
-        cellPadding: 5,
+        cellPadding: 5, 
         valign: 'top'
       },
       columnStyles: {

@@ -1,0 +1,128 @@
+/** 
+* Paste one or more documents here
+*/
+{
+  "employee_id": "1071",
+  "__v": 0,
+  "achievements": [
+    {
+      "title": "aermsdnm",
+      "category": "Project",
+      "description": "q,fwajwrmnraklehvbhlaievblaibjlae\narwjnvaerjnvaerj\naelrkgjvhnaerksjvv",
+      "date": "",
+      "impact_level": "Low",
+      "custom_fields": [],
+      "_id": {
+        "$oid": "6964bab8175ccf45b8f7a880"
+      }
+    }
+  ],
+  "assessment_period": "2024-2025",
+  "assessment_year": 2025,
+  "contributions": {
+    "projects": [
+      {
+        "project_name": "qafrc",
+        "role": "frcd",
+        "status": "In Progress",
+        "outcome": "fqaseqqqq",
+        "custom_fields": [],
+        "_id": {
+          "$oid": "6964bab8175ccf45b8f7a87e"
+        }
+      },
+      {
+        "project_name": "qawfeq",
+        "role": "qweffrqw",
+        "status": "In Progress",
+        "outcome": "q2wefqafq",
+        "custom_fields": [],
+        "_id": {
+          "$oid": "6964bab8175ccf45b8f7a87f"
+        }
+      }
+    ],
+    "initiatives": [],
+    "process_improvements": []
+  },
+  "created_at": {
+    "$date": "2026-01-12T09:11:20.377Z"
+  },
+  "ctc_information": {
+    "current_ctc": 5,
+    "expected_ctc": 8,
+    "justification": "just i am good",
+    "current_ctc_breakup": []
+  },
+  "custom_sections": [],
+  "department": "Software Development (India)",
+  "designation": "Software Developer",
+  "educational_background": [
+    {
+      "field_name": "btech",
+      "field_value": "it",
+      "field_type": "text",
+      "_id": {
+        "$oid": "6964bab8175ccf45b8f7a881"
+      }
+    }
+  ],
+  "employee_email": "sahil.vashisht@podtech.com",
+  "employee_name": "Sahil Vashisht",
+  "kra_metrics": [
+    {
+      "kra_title": "study",
+      "weightage": 12,
+      "priority": "Medium",
+      "metrics": [],
+      "self_rating": 5,
+      "status": "In Progress",
+      "_id": {
+        "$oid": "6964bab8175ccf45b8f7a87a"
+      }
+    },
+    {
+      "kra_title": "time pass ",
+      "weightage": 21,
+      "priority": "Medium",
+      "metrics": [],
+      "self_rating": 4,
+      "status": "In Progress",
+      "_id": {
+        "$oid": "6964bab8175ccf45b8f7a87b"
+      }
+    }
+  ],
+  "learning_growth": {
+    "skills_acquired": [
+      {
+        "skill_name": "qweff",
+        "proficiency_level": "Intermediate",
+        "acquired_date": "",
+        "how_acquired": "On-the-job",
+        "_id": {
+          "$oid": "6964bab8175ccf45b8f7a87c"
+        }
+      },
+      {
+        "skill_name": "javascript ",
+        "proficiency_level": "Intermediate",
+        "acquired_date": "",
+        "how_acquired": "On-the-job",
+        "_id": {
+          "$oid": "6964bab8175ccf45b8f7a87d"
+        }
+      }
+    ],
+    "training_courses": []
+  },
+  "overall_assessment": {
+    "strengths": [],
+    "areas_of_improvement": [],
+    "self_overall_rating": 7.5
+  },
+  "status": "Draft",
+  "updated_at": {
+    "$date": "2026-01-12T09:11:29.326Z"
+  }
+}

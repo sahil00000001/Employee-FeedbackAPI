@@ -28,13 +28,17 @@ router.post('/', async (req, res) => {
   try {
     const { employee_id, status } = req.body;
     
-    // Ensure we don't accidentally overwrite a "Submitted" status with "Draft" 
-    // unless explicitly requested (though usually you'd want to keep it Submitted)
+    // Ensure we don't accidentally overwrite a "Completed" or "Submitted" status with "Draft"
     const current = await KRAAssessment.findOne({ employee_id });
     
     let finalStatus = status;
-    if (current && current.status === "Submitted" && status === "Draft") {
-      finalStatus = "Submitted"; // Keep it submitted if it was already
+    if (current) {
+      const currentStatusLower = (current.status || "").toLowerCase();
+      const newStatusLower = (status || "").toLowerCase();
+      
+      if ((currentStatusLower === "completed" || currentStatusLower === "submitted") && newStatusLower === "draft") {
+        finalStatus = current.status; // Keep the more advanced status
+      }
     }
 
     const assessment = await KRAAssessment.findOneAndUpdate(
